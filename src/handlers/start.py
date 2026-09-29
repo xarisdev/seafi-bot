@@ -17,13 +17,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user = await api_client.get_user(telegram_id)
 
     except NotFoundError:
-        user = await api_client.create_user(
-            UserCreate(
-                username=update.effective_user.username,
-                telegram_id=telegram_id,
-                language="ru"
-            )
-        )
+        user = await api_client.create_user(UserCreate(telegram_id=telegram_id))
 
     except APIError:
         await context.bot.send_message(
@@ -31,10 +25,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             text="Сервер временно недоступен, повторите попытку позднее."
         )
         return
-
+    
     context.bot_data["users"][telegram_id] = user.model_dump()
     
     await update.message.reply_text(
         "Меню:",
-        reply_markup=menu_keyboard(user.is_premium)
+        reply_markup=menu_keyboard()
     )

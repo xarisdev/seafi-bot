@@ -6,25 +6,25 @@ from .config import settings
 from ..models.exceptions import NotFoundError
 
 from ..handlers.start import start
-from ..handlers.subscription import (
-    subscriptions_list,
-    subscription_info
+from ..handlers.plan import (
+    plans_list,
+    plan_info
 )
 
 from ..services.api import api_client
 from ..services.websocket import websocket_client
 
-logger = _lg.logging.getLogger("app.lifespan")
+logger = _lg.logging.getLogger("app.lifespan.cycle")
 
 async def on_startup(application: Application):
     api_client.start()
     websocket_client.init_loop()
 
     try:
-        subscriptions = await api_client.get_subscriptions()    
+        plans = await api_client.get_plans()    
     except NotFoundError:
-        subscriptions = []
-    application.bot_data["subscriptions"] = subscriptions
+        plans = []
+    application.bot_data["plans"] = plans
     logger.debug("startup success")
 
 async def on_shutdown(application: Application):
@@ -33,10 +33,6 @@ async def on_shutdown(application: Application):
     logger.debug("shutdown success")
 
 def build_app() -> Application:
-
-    # ------------ Clients ------------
-
-    #websocket = WebSocketClient()
 
     # ------------ Build ------------
 
@@ -57,14 +53,14 @@ def build_app() -> Application:
     application.add_handler(CommandHandler("start", start))
     application.add_handler(
         CallbackQueryHandler(
-            subscriptions_list,
-            pattern=r"^sub:list$"
+            plans_list,
+            pattern=r"^plan:list$"
         )
     )
     application.add_handler(
         CallbackQueryHandler(
-            subscription_info,
-            pattern=r"^sub:\d+$"
+            plan_info,
+            pattern=r"^plan:\d+$"
         )
     )
 

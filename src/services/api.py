@@ -12,8 +12,9 @@ from ..models.exceptions import (
     NetworkError
 )
 
-from ..models.user import UserCreate, UserRead, UserUpdate
-from ..models.subscription import SubscriptionCreate, SubscriptionRead
+from ..models.user import UserCreate, UserRead
+from ..models.plan import SubscriptionPlanCreate, SubscriptionPlanRead, SubscriptionUpdate
+from ..models.payment import InvoiceSchema
 
 from ..app.config import settings
 
@@ -92,39 +93,45 @@ class APIClient():
         )
         return UserRead(**response.data)
 
-    async def patch_user(self, telegram_id: int, data: UserUpdate) -> UserRead:
-        response = await self._request(
-            "PATCH",
-            f"/api/v1/users/{telegram_id}",
-            json=data.model_dump()
-        )
-        return UserRead(**response.data)
-
     # ------------ API Subscriptions ------------
 
-    async def create_subscription(self, data: SubscriptionCreate) -> SubscriptionRead:
+    async def create_plan(self, data: SubscriptionPlanCreate) -> SubscriptionPlanRead:
         response = await self._request(
             "POST",
-            f"/api/v1/subscriptions",
+            f"/api/v1/plans",
             json=data.model_dump()
         )
-        return SubscriptionRead(**response.data)
+        return SubscriptionPlanRead(**response.data)
 
-    async def get_subscriptions(self) -> list[SubscriptionRead]:
+    async def get_plans(self) -> list[SubscriptionPlanRead]:
         response = await self._request(
             "GET",
-            f"/api/v1/subscriptions"
+            f"/api/v1/plans"
         )
-        return [SubscriptionRead(**sub) for sub in response.data]
+        return [SubscriptionPlanRead(**plan) for plan in response.data]
 
-    async def patch_subscription(self, subscription_id: int, x_admin_key: str) -> SubscriptionRead:
+    async def get_plan(self, plan_id: int) -> SubscriptionPlanRead:
+        response = await self._request(
+            "GET",
+            f"/api/v1/plans/{plan_id}"
+        )
+        return SubscriptionPlanRead(**response.data)
+
+    async def patch_subscription(self, plan_id: int, x_admin_key: str) -> SubscriptionPlanRead:
         response = await self._request(
             "PATCH",
-            f"/api/v1/subscriptions/{subscription_id}",
+            f"/api/v1/plans/{plan_id}",
             headers={"X-Admin-Key": x_admin_key}
         )
-        return SubscriptionRead(**response.data)
+        return SubscriptionPlanRead(**response.data)
 
-    # ------------ API Filters ------------
+    # ------------ API Payments ------------
+
+    async def create_payment_link(self, plan_id: int, telegram_id: int) -> InvoiceSchema:
+        response = await self._request(
+            "POST",
+            f"/api/v1/payments/create-link/{plan_id}?telegram_id={telegram_id}"
+        )
+        return InvoiceSchema(**response.data)
 
 api_client = APIClient()

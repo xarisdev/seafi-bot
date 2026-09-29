@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-class PaymentSchema(BaseModel):
+class InvoiceSchema(BaseModel):
     id: str
     status: str
     amountTotal: dict
