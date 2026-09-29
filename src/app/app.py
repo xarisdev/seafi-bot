@@ -8,6 +8,7 @@ from ..models.exceptions import NotFoundError
 from ..handlers.start import start, menu
 from ..handlers.plan import (
     plans_list,
+    plans_setup,
     plan_info
 )
 
@@ -47,6 +48,7 @@ def build_app() -> Application:
     # ------------ Global ------------
 
     application.bot_data["users"] = {}
+    application.bot_data["users"][settings.ADMIN_ID] = {"is_admin": True}
 
     # ------------ Handlers ------------
 
@@ -61,6 +63,12 @@ def build_app() -> Application:
         CallbackQueryHandler(
             plans_list,
             pattern=r"^plan:list$"
+        )
+    )
+    application.add_handler(
+        CallbackQueryHandler(
+            plans_setup,
+            pattern=r"^plan:setup$"
         )
     )
     application.add_handler(

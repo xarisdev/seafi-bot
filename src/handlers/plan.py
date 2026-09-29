@@ -4,6 +4,7 @@ from telegram.ext import ContextTypes
 from ..keyboards.plan import (
     plan_keyboard,
     plans_keyboard,
+    plans_edit_keyboard,
     payment_methods_keyboard
 )
 
@@ -67,4 +68,24 @@ async def plan_info(
     await query.edit_message_text(
         text=text,
         reply_markup=plan_keyboard(plan.id),
+    )
+
+async def plans_setup(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+    query = update.callback_query
+    await query.answer()
+
+    try:
+        plans = await api_client.get_plans()    
+    except NotFoundError:
+        plans = []
+    
+    context.bot_data["plans"] = plans
+    plans: list[SubscriptionPlanRead] = context.bot_data["plans"]
+
+    await query.edit_message_text(
+        "Действие:",
+        reply_markup=plans_edit_keyboard(plans)
     )

@@ -25,13 +25,16 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             text="Сервер временно недоступен, повторите попытку позднее."
         )
         return
-    
-    context.bot_data["users"][telegram_id] = user.model_dump()
+
+    data = user.model_dump() | context.bot_data["users"].get(telegram_id, {})
+    context.bot_data["users"][telegram_id] = data
     context.user_data["is_auth"] = True
+
+    is_admin = context.bot_data["users"][telegram_id].get("is_admin", False)
     
     await update.message.reply_text(
         "Меню:",
-        reply_markup=menu_keyboard()
+        reply_markup=menu_keyboard(is_admin=is_admin)
     )
 
 async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -44,7 +47,9 @@ async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
+    is_admin = context.bot_data["users"][update.effective_user.id].get("is_admin", False)
+
     await query.edit_message_text(
         text="Меню:",
-        reply_markup=menu_keyboard(),
+        reply_markup=menu_keyboard(is_admin=is_admin),
     )
