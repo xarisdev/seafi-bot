@@ -5,7 +5,7 @@ from .config import settings
 
 from ..models.exceptions import NotFoundError
 
-from ..handlers.start import start
+from ..handlers.start import start, menu
 from ..handlers.plan import (
     plans_list,
     plan_info
@@ -51,6 +51,12 @@ def build_app() -> Application:
     # ------------ Handlers ------------
 
     application.add_handler(CommandHandler("start", start))
+    application.add_handler(
+        CallbackQueryHandler(
+            menu,
+            pattern=r"^menu:main$"
+        )
+    )
     application.add_handler(
         CallbackQueryHandler(
             plans_list,
