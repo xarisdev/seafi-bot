@@ -1,4 +1,5 @@
 from telegram import Update
+from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 
 from ..keyboards.plan import (
@@ -25,20 +26,19 @@ async def plans_list(
     plans: dict[int, SubscriptionPlanRead] = context.bot_data["plans"]
     plans_list = [plan for plan in plans.values()]
 
-    text = "Доступные подписки:\n\n"
+    text = "Автопоиск новых объявлений по вашим фильтрам 🔎\n\n<b>Доступные подписки:</b>\n\n"
 
     for plan in plans_list:
         amount_kgs = round(87 * plan.amount_usd, 2)
-        amount_rub = round(85 * plan.amount_usd, 2)
         text += (
-            f"• {plan.title} — "
-            f"Стоимость: ~{amount_kgs} сом ({plan.amount_usd}$ / {amount_rub}₽)\n"
-            f"{plan.description}\n\n"
+            f"<b>{plan.title}</b>\n"
+            f"💲{plan.amount_usd}$ · ~{amount_kgs} сом\n\n"
         )
 
     await query.edit_message_text(
         text=text,
-        reply_markup=plans_keyboard(plans_list)
+        reply_markup=plans_keyboard(plans_list),
+        parse_mode=ParseMode.HTML
     )
 
 async def plan_info(
@@ -60,15 +60,16 @@ async def plan_info(
     amount_kgs = round(87 * plan.amount_usd, 2)
     amount_rub = round(85 * plan.amount_usd, 2)
     text = (
-        f"{plan.title}\n\n"
+        f"<b>{plan.title}</b>\n\n"
         f"{plan.description}\n\n"
-        f"Стоимость: ~{amount_kgs} сом ({plan.amount_usd}$ / {amount_rub}₽)\n"
-        f"Срок: {plan.duration_hours} ч."
+        f"<b>💲{plan.amount_usd}$ · ~{amount_kgs} сом · ~{amount_rub} ₽</b>\n"
+        f"<b>⏱ {plan.duration_hours//24} д.</b>"
     )
 
     await query.edit_message_text(
         text=text,
         reply_markup=plan_keyboard(plan.id),
+        parse_mode=ParseMode.HTML
     )
 
 async def plans_setup(

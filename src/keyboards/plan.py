@@ -10,7 +10,7 @@ def plans_keyboard(
     for plan in plans:
         keyboard.append([
             InlineKeyboardButton(
-                f"{plan.title} - {plan.amount_usd}$",
+                f"{plan.title} · {plan.amount_usd}$",
                 callback_data=f"plan:{plan.id}"
             )
         ])
@@ -24,8 +24,8 @@ def plan_keyboard(
     plan_id: int
 ) -> InlineKeyboardMarkup:
     keyboard = [
-        [InlineKeyboardButton("Оплатить", callback_data=f"plan:{plan_id}:pay")],
-        [InlineKeyboardButton("Назад", callback_data="menu:main")]
+        [InlineKeyboardButton("Выбрать способ оплаты", callback_data=f"plan:{plan_id}:pay")],
+        [InlineKeyboardButton("Назад", callback_data="plan:list")]
     ]
     return InlineKeyboardMarkup(keyboard)
 
@@ -54,7 +54,7 @@ def plans_edit_keyboard(
     keyboard = [
         [
             InlineKeyboardButton(
-                f"{plan.title} - {plan.amount_usd}$",
+                f"{plan.title} · {plan.amount_usd}$",
                 callback_data=f"plan:patch:{plan.id}"
             )
         ]
