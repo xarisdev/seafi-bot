@@ -3,17 +3,26 @@ from telegram.ext import ContextTypes
 
 from ..keyboards.menu import menu_keyboard
 
+from ..services.api import api_client
+from ..models.exceptions import NotFoundError
+
 async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
-    if context.user_data.get("is_auth") is None:
-        await query.edit_message_text(
-            text="Для продолжения необходимо зарегистрироваться: /start",
-        )
-        return
+    telegram_id = update.effective_user.id
 
-    is_admin = context.bot_data["users"][update.effective_user.id].get("is_admin", False)
+    if context.user_data.get("is_auth") is None:
+        try:
+            user = await api_client.get_user(telegram_id)
+            context.user_data["is_auth"] = True
+        except NotFoundError:
+            await query.edit_message_text(
+                text="Для продолжения необходимо зарегистрироваться: /start",
+            )
+            return
+
+    is_admin = context.bot_data["users"][telegram_id].get("is_admin", False)
 
     await query.edit_message_text(
         text="Меню:",

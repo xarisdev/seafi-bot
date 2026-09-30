@@ -31,7 +31,7 @@ async def on_startup(application: Application):
         plans = []
 
     for plan in plans:
-        application.bot_data["plans"][plan.id] = plans
+        application.bot_data["plans"][plan.id] = plan
     
     logger.debug("startup success")
 
