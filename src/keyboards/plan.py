@@ -55,7 +55,7 @@ def plans_edit_keyboard(
         [
             InlineKeyboardButton(
                 f"{plan.title} - {plan.amount_usd}$",
-                callback_data=f"plan:edit:{plan.id}"
+                callback_data=f"plan:patch:{plan.id}"
             )
         ]
         for plan in plans
@@ -64,4 +64,56 @@ def plans_edit_keyboard(
     keyboard.append([
         InlineKeyboardButton("Назад", callback_data="menu:main")
     ])
+    return InlineKeyboardMarkup(keyboard)
+
+def plan_create_exit() -> InlineKeyboardMarkup:
+    keyboard = [[
+        InlineKeyboardButton(
+            text="Отмена",
+            callback_data=f"plan:create:exit"
+        )
+    ]]
+    return InlineKeyboardMarkup(keyboard)
+
+def plan_create_confirm() -> InlineKeyboardMarkup:
+    keyboard = [
+        [
+            InlineKeyboardButton(
+                text="Подтвердить",
+                callback_data=f"plan:create:confirm"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="Выйти",
+                callback_data=f"plan:create:exit"
+            )
+        ]
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
+def plan_patch_exit() -> InlineKeyboardMarkup:
+    keyboard = [[
+        InlineKeyboardButton(
+            text="Отмена",
+            callback_data=f"plan:patch:exit"
+        )
+    ]]
+    return InlineKeyboardMarkup(keyboard)
+
+def plan_patch_confirm() -> InlineKeyboardMarkup:
+    keyboard = [
+        [
+            InlineKeyboardButton(
+                text="Подтвердить",
+                callback_data=f"plan:patch:confirm"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="Выйти",
+                callback_data=f"plan:patch:exit"
+            )
+        ]
+    ]
     return InlineKeyboardMarkup(keyboard)

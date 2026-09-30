@@ -13,8 +13,8 @@ from ..models.exceptions import (
 )
 
 from ..models.user import UserCreate, UserRead
-from ..models.plan import SubscriptionPlanCreate, SubscriptionPlanRead, SubscriptionUpdate
-from ..models.payment import InvoiceSchema
+from ..models.plan import SubscriptionPlanCreate, SubscriptionPlanRead, SubscriptionPlanUpdate
+from ..models.lava import ProductSchema, InvoiceSchema
 
 from ..app.config import settings
 
@@ -93,7 +93,16 @@ class APIClient():
         )
         return UserRead(**response.data)
 
-    # ------------ API Subscriptions ------------
+    # ------------ API Products ------------
+
+    async def get_products(self) -> list[ProductSchema]:
+        response = await self._request(
+            "GET",
+            f"/api/v1/products"
+        )
+        return [ProductSchema(**data) for data in response.data]
+
+    # ------------ API Plans ------------
 
     async def create_plan(self, data: SubscriptionPlanCreate) -> SubscriptionPlanRead:
         response = await self._request(
@@ -117,11 +126,11 @@ class APIClient():
         )
         return SubscriptionPlanRead(**response.data)
 
-    async def patch_subscription(self, plan_id: int, x_admin_key: str) -> SubscriptionPlanRead:
+    async def patch_plan(self, plan_id: int, data: SubscriptionPlanUpdate) -> SubscriptionPlanRead:
         response = await self._request(
             "PATCH",
             f"/api/v1/plans/{plan_id}",
-            headers={"X-Admin-Key": x_admin_key}
+            json=data.model_dump()
         )
         return SubscriptionPlanRead(**response.data)
 

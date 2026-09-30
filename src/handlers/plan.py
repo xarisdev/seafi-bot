@@ -22,11 +22,12 @@ async def plans_list(
     query = update.callback_query
     await query.answer()
 
-    plans: list[SubscriptionPlanRead] = context.bot_data["plans"]
+    plans: dict[int, SubscriptionPlanRead] = context.bot_data["plans"]
+    plans_list = [plan for plan in plans.values()]
 
     text = "Доступные подписки:\n\n"
 
-    for plan in plans:
+    for plan in plans_list:
         amount_kgs = round(87 * plan.amount_usd, 2)
         amount_rub = round(85 * plan.amount_usd, 2)
         text += (
@@ -37,7 +38,7 @@ async def plans_list(
 
     await query.edit_message_text(
         text=text,
-        reply_markup=plans_keyboard(plans)
+        reply_markup=plans_keyboard(plans_list)
     )
 
 async def plan_info(
@@ -81,11 +82,13 @@ async def plans_setup(
         plans = await api_client.get_plans()    
     except NotFoundError:
         plans = []
-    
-    context.bot_data["plans"] = plans
-    plans: list[SubscriptionPlanRead] = context.bot_data["plans"]
+
+    for plan in plans:
+        context.bot_data["plans"][plan.id] = plan
+
+    plans: dict[int, SubscriptionPlanRead] = context.bot_data["plans"]
 
     await query.edit_message_text(
         "Действие:",
-        reply_markup=plans_edit_keyboard(plans)
+        reply_markup=plans_edit_keyboard([plan for plan in plans.values()])
     )

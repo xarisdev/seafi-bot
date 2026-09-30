@@ -19,9 +19,9 @@ class SubscriptionPlanRead(BaseModel):
     amount_usd: float
     duration_hours: int
 
-class SubscriptionUpdate(BaseModel):
-    title: str = None
-    description: str = None
+class SubscriptionPlanUpdate(BaseModel):
+    title: str
+    description: str
     
-    amount_usd: float = None
-    duration_hours: int = None
+    amount_usd: float
+    duration_hours: int
