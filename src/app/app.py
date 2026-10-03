@@ -20,6 +20,9 @@ from ..services.websocket import websocket_client
 
 logger = _lg.logging.getLogger("app.lifespan.cycle")
 
+_lg.logging.getLogger("httpx").setLevel(_lg.logging.WARNING)
+_lg.logging.getLogger("httpcore").setLevel(_lg.logging.WARNING)
+
 async def on_startup(application: Application):
     api_client.start()
     websocket_client.init_loop()
