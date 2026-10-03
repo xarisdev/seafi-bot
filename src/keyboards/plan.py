@@ -2,7 +2,7 @@ from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 
 from ..models.plan import SubscriptionPlanRead
 
-def plans_keyboard(
+def plans_list_keyboard(
     plans: list[SubscriptionPlanRead]
 ) -> InlineKeyboardMarkup:
     keyboard = []
@@ -20,7 +20,7 @@ def plans_keyboard(
     ])
     return InlineKeyboardMarkup(keyboard)
 
-def plan_keyboard(
+def plan_info_keyboard(
     plan_id: int
 ) -> InlineKeyboardMarkup:
     keyboard = [
@@ -47,6 +47,8 @@ def payment_methods_keyboard(
     ])
     
     return InlineKeyboardMarkup(keyboard)
+
+# ------------ Admin keyboards ------------
 
 def plans_edit_keyboard(
     plans: list[SubscriptionPlanRead]

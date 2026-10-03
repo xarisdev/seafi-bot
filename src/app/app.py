@@ -8,9 +8,9 @@ from ..models.exceptions import NotFoundError
 from ..handlers.commands.start import start
 from ..handlers.menu import menu
 from ..handlers.plan import (
-    plans_list,
-    plans_setup,
-    plan_info
+    plans_list_handler,
+    plans_setup_handler,
+    plan_info_handler
 )
 from ..handlers.conversations.plan_create import conversation as plan_create_conversation
 from ..handlers.conversations.plan_patch import conversation as plan_patch_conversation
@@ -70,14 +70,8 @@ def build_app() -> Application:
     application.add_handler(
         CallbackQueryHandler(menu, pattern=r"^menu:main$")
     )
-    application.add_handler(
-        CallbackQueryHandler(plans_list, pattern=r"^plan:list$")
-    )
-    application.add_handler(
-        CallbackQueryHandler(plans_setup, pattern=r"^plan:setup$")
-    )
-    application.add_handler(
-        CallbackQueryHandler(plan_info, pattern=r"^plan:\d+$")
-    )
+    application.add_handler(plans_list_handler)
+    application.add_handler(plans_setup_handler)
+    application.add_handler(plan_info_handler)
 
     return application
