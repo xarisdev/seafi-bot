@@ -16,6 +16,10 @@ async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
         try:
             user = await api_client.get_user(telegram_id)
             context.user_data["is_auth"] = True
+            
+            bot_data = context.bot_data["users"].get(telegram_id, {})
+            context.bot_data["users"][telegram_id] = bot_data | user.model_dump()
+        
         except NotFoundError:
             await query.edit_message_text(
                 text="Для продолжения необходимо зарегистрироваться: /start",
