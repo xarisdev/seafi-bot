@@ -143,4 +143,12 @@ class APIClient():
         )
         return InvoiceSchema(**response.data)
 
+    async def check_payment(self, invoice: InvoiceSchema):
+        #placeholder
+        pass
+
+    async def cancel_payment(self, telegram_id: int, invoice: InvoiceSchema):
+        #placeholder
+        pass
+
 api_client = APIClient()
