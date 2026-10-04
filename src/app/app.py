@@ -12,6 +12,11 @@ from ..handlers.plan import (
     plans_setup_handler,
     plan_info_handler
 )
+from ..handlers.payment import (
+    payment_selector_handler,
+    payment_check_handler,
+    payment_cancel_handler
+)
 from ..handlers.conversations.plan_create import conversation as plan_create_conversation
 from ..handlers.conversations.plan_patch import conversation as plan_patch_conversation
 
@@ -25,7 +30,7 @@ _lg.logging.getLogger("httpcore").setLevel(_lg.logging.WARNING)
 
 async def on_startup(application: Application):
     api_client.start()
-    websocket_client.init_loop()
+    websocket_client.init_loop(application)
 
     application.bot_data["plans"] = {}
     try:
@@ -59,6 +64,8 @@ def build_app() -> Application:
 
     application.bot_data["users"] = {}
     application.bot_data["users"][settings.ADMIN_ID] = {"is_admin": True}
+    
+    application.bot_data["invoices"] = {}
 
     # ------------ Handlers ------------
 
@@ -73,5 +80,9 @@ def build_app() -> Application:
     application.add_handler(plans_list_handler)
     application.add_handler(plans_setup_handler)
     application.add_handler(plan_info_handler)
+
+    application.add_handler(payment_check_handler)
+    application.add_handler(payment_cancel_handler)
+    application.add_handler(payment_selector_handler)
 
     return application

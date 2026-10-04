@@ -24,7 +24,7 @@ def plan_info_keyboard(
     plan_id: int
 ) -> InlineKeyboardMarkup:
     keyboard = [
-        [InlineKeyboardButton("Выбрать способ оплаты", callback_data=f"plan:{plan_id}:pay")],
+        [InlineKeyboardButton("Выбрать способ оплаты (Lava)", callback_data=f"plan:{plan_id}:pay")],
         [InlineKeyboardButton("Назад", callback_data="plan:list")]
     ]
     return InlineKeyboardMarkup(keyboard)

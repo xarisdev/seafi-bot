@@ -16,6 +16,8 @@ async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
         try:
             user = await api_client.get_user(telegram_id)
             context.user_data["is_auth"] = True
+
+            #sub = await api_client.get_subscription(telegram_id)
             
             bot_data = context.bot_data["users"].get(telegram_id, {})
             context.bot_data["users"][telegram_id] = bot_data | user.model_dump()
