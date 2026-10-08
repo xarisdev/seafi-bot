@@ -1,7 +1,9 @@
-from .app import build_app
+from . import logger
+
+from .app import build_application
 
 def main():
-    app = build_app()
+    app = build_application()
     app.run_polling()
 
 if __name__ == "__main__":

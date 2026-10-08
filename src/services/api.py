@@ -78,11 +78,11 @@ class APIClient():
 
     # ------------ API Users ------------
     
-    async def create_user(self, data: UserCreate) -> UserRead:
+    async def create_user(self, telegram_id: int) -> UserRead:
         response = await self._request(
             "POST",
             "/api/v1/users",
-            json=data.model_dump()
+            json={"telegram_id": telegram_id}
         )
         return UserRead(**response.data)
 

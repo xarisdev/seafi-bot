@@ -1,12 +1,23 @@
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler
+import asyncio
+import logging
 
-from . import logger as _lg
+from collections import defaultdict
+
+from telegram.ext import Application
+
 from .config import settings
 
-from ..models.exceptions import NotFoundError
+from ..security.verify_user import verify_handler
 
-from ..handlers.commands.start import start
-from ..handlers.menu import menu
+from ..services.api import api_client
+from ..services.websocket import websocket_client
+
+from ..scripts.utils import safe_load
+from ..scripts.startup.load_superuser import load_superuser
+from ..scripts.startup.load_plans import load_plans
+
+from ..handlers.commands.start import start_command_handler
+from ..handlers.menu import menu_handler
 from ..handlers.plan import (
     plans_list_handler,
     plans_setup_handler,
@@ -20,37 +31,43 @@ from ..handlers.payment import (
 from ..handlers.conversations.plan_create import conversation as plan_create_conversation
 from ..handlers.conversations.plan_patch import conversation as plan_patch_conversation
 
-from ..services.api import api_client
-from ..services.websocket import websocket_client
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
 
-logger = _lg.logging.getLogger("app.lifespan.cycle")
+logger = logging.getLogger("app.lifecycle")
 
-_lg.logging.getLogger("httpx").setLevel(_lg.logging.WARNING)
-_lg.logging.getLogger("httpcore").setLevel(_lg.logging.WARNING)
-
-async def on_startup(application: Application):
+async def on_startup(app: Application):
     api_client.start()
-    websocket_client.init_loop(application)
+    websocket_client.init_loop(app)
 
-    application.bot_data["plans"] = {}
-    try:
-        plans = await api_client.get_plans()    
-    except NotFoundError:
-        plans = []
+    # ------------ Synchronization ------------
+    
+    superuser = await safe_load(
+        load_superuser(api_client, settings.ADMIN_ID),
+        default=None,
+        msg=f"superuser {settings.ADMIN_ID}"
+    )
+    if superuser:
+        app.bot_data["users"][settings.ADMIN_ID] = superuser
 
-    for plan in plans:
-        application.bot_data["plans"][plan.id] = plan
+    app.bot_data["plans"] = await safe_load(
+        load_plans(api_client),
+        default={},
+        msg="plans"
+    )
     
     logger.debug("startup success")
 
-async def on_shutdown(application: Application):
+async def on_shutdown(app: Application):
     await websocket_client.close()
     await api_client.close()
+
     logger.debug("shutdown success")
 
-def build_app() -> Application:
+# ------------ Build ------------
 
-    # ------------ Build ------------
+def build_application() -> Application:
+    logger.info("Building application")
 
     application = (
         Application.builder()
@@ -62,21 +79,31 @@ def build_app() -> Application:
 
     # ------------ Global ------------
 
+    application.bot_data['locks'] = defaultdict(asyncio.Lock)
+
     application.bot_data["users"] = {}
-    application.bot_data["users"][settings.ADMIN_ID] = {"is_admin": True}
+
+    application.bot_data["user_flags"] = {}
+    application.bot_data["user_flags"][settings.ADMIN_ID] = {
+        "is_owner": True,
+        "is_admin": True,
+        "is_banned": False
+    }
     
+    application.bot_data["user_subscriptions"] = {}
+
+    application.bot_data["plans"] = {}
     application.bot_data["invoices"] = {}
 
     # ------------ Handlers ------------
-
-    application.add_handler(CommandHandler("start", start))
+    
+    application.add_handler(start_command_handler, group=-2)
+    application.add_handler(verify_handler, group=-1)
 
     application.add_handler(plan_create_conversation)
     application.add_handler(plan_patch_conversation)
 
-    application.add_handler(
-        CallbackQueryHandler(menu, pattern=r"^menu:main$")
-    )
+    application.add_handler(menu_handler)
     application.add_handler(plans_list_handler)
     application.add_handler(plans_setup_handler)
     application.add_handler(plan_info_handler)
