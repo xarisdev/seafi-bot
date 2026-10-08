@@ -8,6 +8,10 @@ class ProductSchema(BaseModel):
     offer_name: str
     offer_description: str | None
 
+class PaymentSchema(BaseModel):
+    invoice: dict
+    subscription: dict
+
 class InvoiceSchema(BaseModel):
     id: str
     status: str

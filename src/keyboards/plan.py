@@ -31,16 +31,17 @@ def plan_info_keyboard(
 
 def payment_methods_keyboard(
     plan_id: int,
-    payment_methods: list
+    plan_title: list[str],
+    payment_method_codes: list[str]
 ) -> InlineKeyboardMarkup:
     keyboard = [
         [
             InlineKeyboardButton(
-                text=payment_method.title,
-                callback_data=f"plan:{plan_id}:pay:{payment_method.id}"
+                text=title,
+                callback_data=f"plan:{plan_id}:pay:{code}"
             )
         ]
-        for payment_method in payment_methods
+        for title, code in zip(plan_title, payment_method_codes)
     ]
     keyboard.append([
         InlineKeyboardButton("Назад", callback_data=f"plan:{plan_id}")

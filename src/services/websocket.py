@@ -38,6 +38,7 @@ class WebSocketClient:
                 await asyncio.sleep(5)
 
     async def handler_wss(self, message: str):
+        return # TODO
         data = json.loads(message)
 
         telegram_id = data["telegram_id"]

@@ -14,7 +14,7 @@ from ..models.exceptions import (
 
 from ..models.user import UserCreate, UserRead
 from ..models.plan import SubscriptionPlanCreate, SubscriptionPlanRead, SubscriptionPlanUpdate
-from ..models.lava import ProductSchema, InvoiceSchema
+from ..models.lava import ProductSchema, PaymentSchema
 
 from ..app.config import settings
 
@@ -136,19 +136,19 @@ class APIClient():
 
     # ------------ API Payments ------------
 
-    async def create_payment_link(self, plan_id: int, telegram_id: int) -> InvoiceSchema:
+    async def create_payment_link(self, plan_id: int, telegram_id: int, currency: str) -> PaymentSchema:
         response = await self._request(
             "POST",
-            f"/api/v1/payments/create-link/{plan_id}?telegram_id={telegram_id}"
+            f"/api/v1/payments/create-link/{plan_id}?telegram_id={telegram_id}&currency={currency}"
         )
-        return InvoiceSchema(**response.data)
+        return PaymentSchema(**response.data)
 
-    async def check_payment(self, invoice: InvoiceSchema):
-        #placeholder
-        pass
+    #async def check_payment(self, invoice: InvoiceSchema):
+    #    #placeholder
+    #    pass
 
-    async def cancel_payment(self, telegram_id: int, invoice: InvoiceSchema):
-        #placeholder
-        pass
+    #async def cancel_payment(self, telegram_id: int, invoice: InvoiceSchema):
+    #    #placeholder
+    #    pass
 
 api_client = APIClient()

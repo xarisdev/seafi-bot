@@ -21,10 +21,11 @@ from ..handlers.menu import menu_handler
 from ..handlers.plan import (
     plans_list_handler,
     plans_setup_handler,
-    plan_info_handler
+    selected_plan_info_handler,
+    plan_payment_methods_handler,
+    selected_plan_payment_handler
 )
 from ..handlers.payment import (
-    payment_selector_handler,
     payment_check_handler,
     payment_cancel_handler
 )
@@ -106,10 +107,11 @@ def build_application() -> Application:
     application.add_handler(menu_handler)
     application.add_handler(plans_list_handler)
     application.add_handler(plans_setup_handler)
-    application.add_handler(plan_info_handler)
+    application.add_handler(selected_plan_info_handler)
+    application.add_handler(plan_payment_methods_handler)
+    application.add_handler(selected_plan_payment_handler)
 
     application.add_handler(payment_check_handler)
     application.add_handler(payment_cancel_handler)
-    application.add_handler(payment_selector_handler)
 
     return application

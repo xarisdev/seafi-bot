@@ -8,6 +8,9 @@ from ..keyboards.plan import (
     plans_edit_keyboard,
     payment_methods_keyboard
 )
+from ..keyboards.payment import (
+    payment_keyboard
+)
 
 from ..models.plan import SubscriptionPlanRead
 from ..models.exceptions import (
@@ -46,7 +49,7 @@ async def plans_list(
         parse_mode=ParseMode.HTML
     )
 
-async def plan_info(
+async def selected_plan_info(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE
 ):
@@ -55,7 +58,6 @@ async def plan_info(
 
     plan_id = int(query.data.split(":")[1])
     bot_plans = context.bot_data.get("plans", {})
-    
     selected_plan: SubscriptionPlanRead = bot_plans.get(plan_id)
 
     if selected_plan is None:
@@ -110,6 +112,86 @@ async def plans_setup(
         ])
     )
 
+async def plan_payment_methods(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+    query = update.callback_query
+    await query.answer()
+
+    plan_id = int(query.data.split(":")[1])
+
+    bot_plans = context.bot_data.get("plans", {})
+    selected_plan: SubscriptionPlanRead = bot_plans.get(plan_id)
+
+    if selected_plan is None:
+        await query.edit_message_text(
+            "Эта подписка больше не доступна",
+            reply_markup=plans_list_keyboard(bot_plans)
+        )
+        return
+
+    keyboard = payment_methods_keyboard(
+        plan_id,
+        [
+            "🌎 Lava USD — карты, PayPal и др.",
+            "🇷🇺 Lava RUB — РФ (+8%)"
+        ],
+        ["USD", "RUB"]
+    )
+
+    await query.edit_message_reply_markup(reply_markup=keyboard)
+
+async def selected_plan_payment(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+    query = update.callback_query
+    await query.answer()
+
+    data = query.data.split(":")
+    plan_id = int(data[1])
+    currency = data[3]
+
+    bot_plans = context.bot_data.get("plans", {})
+    selected_plan: SubscriptionPlanRead = bot_plans.get(plan_id)
+
+    telegram_id = update.effective_user.id
+
+    payment_data = await api_client.create_payment_link(
+        plan_id=selected_plan.id,
+        telegram_id=telegram_id,
+        currency=currency
+    ) # сделать загрузку CURRENCY в генерацию ссылки
+    invoice = payment_data.invoice
+    subscription = payment_data.subscription
+
+    payment_timeout_m = invoice.get("payment_timeout_s") // 60
+
+    context.bot_data["invoices"][telegram_id] = invoice
+    context.bot_data["user_subscriptions"][telegram_id] = subscription
+
+    # --------------------------------------------------
+    # TODO: refactor, safety . . .  --------------------
+    _kf = {"RUB": 85, "USD": 1.00}.get(currency)
+    amount = round(selected_plan.amount_usd * _kf, 2)
+    sign = {"RUB": "₽", "USD": "$"}.get(currency)
+    to_pay_text = f"<b>К оплате:</b> {amount} {sign}\n\n"
+    # --------------------------------------------------
+
+    text = (
+        f"<b>Ссылка на оплату - {selected_plan.title}</b>\n\n"
+        f"{to_pay_text}"
+        f"<b>Важно:</b>"
+        f"<i>Ссылка действительная в течение {payment_timeout_m} минут</i>"
+    )
+    await query.edit_message_text(
+        text=text,
+        reply_markup=payment_keyboard(invoice["paymentUrl"]),
+        parse_mode=ParseMode.HTML
+    )
+
+
 plans_list_handler = CallbackQueryHandler(
     plans_list,
     pattern=r"^plan:list$"
@@ -118,7 +200,15 @@ plans_setup_handler = CallbackQueryHandler(
     plans_setup,
     pattern=r"^plan:setup$"
 )
-plan_info_handler = CallbackQueryHandler(
-    plan_info,
+selected_plan_info_handler = CallbackQueryHandler(
+    selected_plan_info,
     pattern=r"^plan:\d+$"
+)
+plan_payment_methods_handler = CallbackQueryHandler(
+    plan_payment_methods,
+    pattern=r"^plan:(\d+):pay$"
+)
+selected_plan_payment_handler = CallbackQueryHandler(
+    selected_plan_payment,
+    pattern=r"^plan:(\d+):pay:(.{3})$"
 )
