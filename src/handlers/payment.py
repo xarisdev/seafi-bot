@@ -22,13 +22,16 @@ async def check_payment(
     query = update.callback_query
     await query.answer()
 
+    bot_data = context.bot_data
+
     telegram_id = update.effective_user.id
 
-    invoice: InvoiceSchema = context.bot_data["invoices"].get(telegram_id)
+    # telegram_id should be invoice_id from query.data (change keyboard)
+    invoice: InvoiceSchema = bot_data["invoices"].get(telegram_id)
     if invoice is None:
         return
 
-    payment_status = await api_client.check_payment(invoice)
+    #payment_status = await api_client.check_payment(invoice)
     #placeholder
     return
     
@@ -39,20 +42,23 @@ async def cancel_payment(
     query = update.callback_query
     await query.answer()
 
-    telegram_id = update.effective_user.id
-    is_admin = context.bot_data["users"][telegram_id].get("is_admin", False)
+    bot_data = context.bot_data
 
-    invoice: InvoiceSchema = context.bot_data["invoices"].get(telegram_id)
+    telegram_id = update.effective_user.id
+    is_admin = bot_data["user_flags"][telegram_id]["is_admin"]
+
+    # telegram_id should be invoice_id from query.data (change keyboard)
+    invoice: InvoiceSchema = bot_data["invoices"].get(telegram_id)
     if invoice is None:
         await query.edit_message_text(
-            "Отмена",
+            "Ошибка платежа",
             reply_markup=menu_keyboard(is_admin)
         )
         return
     
     invoice.status = "cancel"
 
-    await api_client.cancel_payment(telegram_id, invoice)
+    #await api_client.cancel_payment(telegram_id, invoice)
 
     await query.edit_message_text(
         "Оплата отменена",

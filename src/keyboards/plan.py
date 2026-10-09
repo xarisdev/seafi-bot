@@ -40,8 +40,8 @@ def payment_methods_keyboard(
                 text=title,
                 callback_data=f"plan:{plan_id}:pay:{code}"
             )
+            for title, code in zip(plan_title, payment_method_codes)
         ]
-        for title, code in zip(plan_title, payment_method_codes)
     ]
     keyboard.append([
         InlineKeyboardButton("Назад", callback_data=f"plan:{plan_id}")

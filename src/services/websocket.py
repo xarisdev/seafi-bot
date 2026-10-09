@@ -9,6 +9,8 @@ from ..app.config import settings
 
 from .payment_handler import handle_payment_result
 
+from ..models.websocket import Payload
+
 logger = logging.getLogger("websocket")
 
 class WebSocketClient:
@@ -38,27 +40,21 @@ class WebSocketClient:
                 await asyncio.sleep(5)
 
     async def handler_wss(self, message: str):
-        return # TODO
-        data = json.loads(message)
-
-        telegram_id = data["telegram_id"]
-        payload = data["payload"]
-
-        r_invoice_id = payload["invoice_id"]
-
-        invoice = self.application.bot_data["invoices"].get(telegram_id)
-        if invoice is None:
-            logger.warning(f"Invoice not found for telegram_id: {telegram_id}")
-            return
-
-        if invoice.id != r_invoice_id:
-            logger.warning(f"Unexpected invoice_id: {r_invoice_id}")
+        try:
+            data = json.loads(message)
+            model = Payload(**data)
+        
+        except (ValueError, TypeError) as exc:
+            logger.warning(
+                "Error deserialize websocket message",
+                exc.args,
+                exc_info=True
+            )
             return
 
         await handle_payment_result(
             app=self.application,
-            telegram_id=telegram_id,
-            payload=payload
+            payload=model
         )
 
     async def close(self):

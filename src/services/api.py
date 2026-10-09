@@ -14,7 +14,8 @@ from ..models.exceptions import (
 
 from ..models.user import UserCreate, UserRead
 from ..models.plan import SubscriptionPlanCreate, SubscriptionPlanRead, SubscriptionPlanUpdate
-from ..models.lava import ProductSchema, PaymentSchema
+from ..models.lava import ProductSchema, PaymentSchema, InvoiceSchema
+from ..models.subscription import SubscriptionSchema
 
 from ..app.config import settings
 
@@ -141,7 +142,14 @@ class APIClient():
             "POST",
             f"/api/v1/payments/create-link/{plan_id}?telegram_id={telegram_id}&currency={currency}"
         )
-        return PaymentSchema(**response.data)
+        return PaymentSchema(
+            invoice=InvoiceSchema(
+                **response.data.get("invoice")
+            ),
+            subscription=SubscriptionSchema(
+                **response.data.get("subscription")
+            )
+        )
 
     #async def check_payment(self, invoice: InvoiceSchema):
     #    #placeholder
@@ -150,5 +158,22 @@ class APIClient():
     #async def cancel_payment(self, telegram_id: int, invoice: InvoiceSchema):
     #    #placeholder
     #    pass
+
+    # ------------ API Subscriptions ------------
+    async def get_active_subscription(self, telegram_id: int) -> SubscriptionSchema | None:
+        response = await self._request(
+            "GET",
+            f"/api/v1/subscriptions/active?telegram_id={telegram_id}"
+        )
+        if response.data is None:
+            return None
+        return SubscriptionSchema(**response.data)
+
+    async def get_subscription(self, subscription_id: int) -> SubscriptionSchema:
+        response = await self._request(
+            "GET"
+            f"/api/v1/subscriptions/{subscription_id}"
+        )
+        return SubscriptionSchema(**response.data)
 
 api_client = APIClient()

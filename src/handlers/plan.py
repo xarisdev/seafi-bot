@@ -37,7 +37,7 @@ async def plans_list(
     for plan in plans_list:
         plan: SubscriptionPlanRead
         
-        amount_kgs = round(87 * plan.amount_usd, 2)
+        amount_kgs = int(87 * plan.amount_usd)
         text += (
             f"<b>{plan.title}</b>\n"
             f"💲{plan.amount_usd}$ · ~{amount_kgs} сом\n\n"
@@ -67,8 +67,8 @@ async def selected_plan_info(
         )
         return
 
-    amount_kgs = round(87 * selected_plan.amount_usd, 2)
-    amount_rub = round(85 * selected_plan.amount_usd, 2)
+    amount_kgs = int(87 * selected_plan.amount_usd)
+    amount_rub = int(85 * selected_plan.amount_usd)
 
     text = (
         f"<b>{selected_plan.title}</b>\n\n"
@@ -134,8 +134,8 @@ async def plan_payment_methods(
     keyboard = payment_methods_keyboard(
         plan_id,
         [
-            "🌎 Lava USD — карты, PayPal и др.",
-            "🇷🇺 Lava RUB — РФ (+8%)"
+            "🌎 VISA / MasterCard",
+            "🇷🇺 МИР / СБП (+8%)"
         ],
         ["USD", "RUB"]
     )
@@ -149,12 +149,10 @@ async def selected_plan_payment(
     query = update.callback_query
     await query.answer()
 
-    data = query.data.split(":")
-    plan_id = int(data[1])
-    currency = data[3]
+    _, plan_id, _, currency = query.data.split(":")
 
     bot_plans = context.bot_data.get("plans", {})
-    selected_plan: SubscriptionPlanRead = bot_plans.get(plan_id)
+    selected_plan: SubscriptionPlanRead = bot_plans.get(int(plan_id))
 
     telegram_id = update.effective_user.id
 
@@ -162,13 +160,11 @@ async def selected_plan_payment(
         plan_id=selected_plan.id,
         telegram_id=telegram_id,
         currency=currency
-    ) # сделать загрузку CURRENCY в генерацию ссылки
+    )
     invoice = payment_data.invoice
     subscription = payment_data.subscription
 
-    payment_timeout_m = invoice.get("payment_timeout_s") // 60
-
-    context.bot_data["invoices"][telegram_id] = invoice
+    context.bot_data["invoices"][invoice.id] = invoice
     context.bot_data["user_subscriptions"][telegram_id] = subscription
 
     # --------------------------------------------------
@@ -179,10 +175,11 @@ async def selected_plan_payment(
     to_pay_text = f"<b>К оплате:</b> {amount} {sign}\n\n"
     # --------------------------------------------------
 
+    payment_timeout_m = invoice.payment_timeout_s // 60
     text = (
         f"<b>Ссылка на оплату - {selected_plan.title}</b>\n\n"
         f"{to_pay_text}"
-        f"<b>Важно:</b>"
+        f"<b>Важно: </b>"
         f"<i>Ссылка действительная в течение {payment_timeout_m} минут</i>"
     )
     await query.edit_message_text(

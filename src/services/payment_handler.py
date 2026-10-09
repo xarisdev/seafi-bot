@@ -1,31 +1,161 @@
+import logging
+
 from telegram.ext import Application
 
-from ..models.lava import InvoiceSchema
+from ..services.api import api_client
 
-async def handle_payment_result(
+from ..models.exceptions import APIError, NotFoundError
+
+from ..models.lava import InvoiceSchema
+from ..models.websocket import Payload
+from ..models.subscription import SubscriptionSchema
+
+logger = logging.getLogger(__name__)
+
+async def _server_subscription(subscription_id: int) -> SubscriptionSchema:
+    try:
+        return await api_client.get_subscription(subscription_id=subscription_id)
+
+    except NotFoundError:
+        raise
+
+    except APIError as e:
+        logger.warning(
+            "APIError: %s | %s | %s",
+            e.status_code, e.message, e.args
+        )
+        raise
+
+async def _server_active_subscription(telegram_id: int) -> SubscriptionSchema | None:
+    try:
+        # Либо подписка либо None
+        return await api_client.get_active_subscription(telegram_id=telegram_id)
+    
+    except APIError as e:
+        logger.warning(
+            "APIError: %s | %s | %s",
+            e.status_code, e.message, e.args
+        )
+        raise
+
+async def handle_payment_result(app: Application, payload: Payload):
+    telegram_id = payload.telegram_id
+    invoice_id = payload.invoice_id
+
+    bot = app.bot_data
+
+    async with bot["locks"][telegram_id]:
+        invoice: InvoiceSchema = bot["invoices"].get(invoice_id)
+        subscription: SubscriptionSchema = bot["user_subscriptions"].get(telegram_id)
+
+        if invoice is None:
+            logger.warning(
+                "Local invoice not found. Payload: %s",
+                payload.model_dump(mode='json')
+            )
+            return
+        
+        if invoice.status != "new":
+            logger.warning(
+                "SKIP | Local invoice status: %s",
+                invoice.status
+            )
+            return
+
+        if subscription is None:
+            try:
+                subscription = await _server_subscription(subscription_id=payload.subscription_id)
+            
+            except NotFoundError:
+                logger.warning(
+                    "Received subscription with id: %s not exists",
+                    payload.subscription_id
+                )
+                return
+            
+            except APIError:
+                return
+
+            bot["user_subscriptions"][telegram_id] = subscription
+
+        if payload.event_status == "success":
+            await activate_subscription(
+                app=app,
+                telegram_id=telegram_id,
+                invoice=invoice,
+                subscription=subscription,
+                payload=payload
+            )
+
+        elif payload.event_status == "failed":
+            await delete_subscription(
+                app=app,
+                telegram_id=telegram_id,
+                invoice=invoice,
+                subscription=subscription,
+                payload=payload
+            )
+
+async def activate_subscription(
     app: Application,
     telegram_id: int,
-    payload: dict
+    invoice: InvoiceSchema,
+    subscription: SubscriptionSchema,
+    payload: Payload
 ):
-    invoice: InvoiceSchema = app.bot_data["invoices"][telegram_id]
-    invoice.status = payload["status"]
+    try: active_subscription = await _server_active_subscription(telegram_id=telegram_id)
+    except APIError: return
+    
+    if active_subscription is None:
+        try:
+            db_subscription = await _server_subscription(subscription_id=payload.subscription_id)
 
-    event_status = payload["event_status"]
-    subscription_id = payload["subscription_id"]
-    subscription_range = payload["subscription_range"]
+            if db_subscription.status != "new":
+                app.bot_data["user_subscriptions"][telegram_id] = db_subscription
+                invoice.status = "success"
 
-    user = app.bot_data["users"][telegram_id]
+        except NotFoundError:
+            invoice.status = "failed"
+            subscription.status = "failed"
+        
+        except APIError:
+            pass
 
-    if event_status == "success":
-        user["subscription"] = {
-            "id": subscription_id,
-            "started_at": subscription_range["started_at"],
-            "expires_at": subscription_range["expires_at"]
-        }
+        return
 
-    elif event_status == "failed":
-        user_sub = user.get("subscription")
-        if user_sub is None:
-            return
-        if user_sub.get("id") == subscription_id:   
-            user["subscription"]["expires_at"] = None
+    app.bot_data["user_subscriptions"][telegram_id] = active_subscription
+    invoice.status = payload.event_status
+
+    # TODO: user notification
+
+async def delete_subscription(
+    app: Application,
+    telegram_id: int,
+    invoice: InvoiceSchema,
+    subscription: SubscriptionSchema,
+    payload: Payload
+):
+    try: active_subscription = await _server_active_subscription(telegram_id=telegram_id)
+    except APIError: return    
+    # Ожидаемое поведение (неудачная оплата)
+    if active_subscription is None:
+        try:
+            db_subscription = await _server_subscription(subscription_id=payload.subscription_id)
+            app.bot_data["user_subscriptions"][telegram_id] = db_subscription
+            if db_subscription.status != "new":
+                invoice.status = "success"
+
+        except NotFoundError:
+            invoice.status = "failed"
+            subscription.status = "failed"
+
+        except APIError:
+            pass
+        
+        return
+
+    # Если внезапно после неудачно оплаты у сервера осталась другая активная подписка - подменяем, что внутри уже не особо важно
+    app.bot_data["user_subscriptions"][telegram_id] = active_subscription
+    invoice.status = "success"
+
+    # TODO: user notification
