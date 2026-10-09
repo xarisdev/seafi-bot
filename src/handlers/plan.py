@@ -184,7 +184,7 @@ async def selected_plan_payment(
     )
     await query.edit_message_text(
         text=text,
-        reply_markup=payment_keyboard(invoice["paymentUrl"]),
+        reply_markup=payment_keyboard(invoice.paymentUrl),
         parse_mode=ParseMode.HTML
     )
 

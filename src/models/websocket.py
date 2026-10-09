@@ -10,4 +10,4 @@ class Payload(BaseModel):
     status: str
     timestamp: datetime
     subscription_id: int
-    subscription_range: dict[str, datetime]
+    subscription_range: dict[str, datetime | None]

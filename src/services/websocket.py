@@ -46,8 +46,8 @@ class WebSocketClient:
         
         except (ValueError, TypeError) as exc:
             logger.warning(
-                "Error deserialize websocket message",
-                exc.args,
+                "Error deserialize websocket message | %s",
+                exc,
                 exc_info=True
             )
             return

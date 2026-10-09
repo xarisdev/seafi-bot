@@ -171,7 +171,7 @@ class APIClient():
 
     async def get_subscription(self, subscription_id: int) -> SubscriptionSchema:
         response = await self._request(
-            "GET"
+            "GET",
             f"/api/v1/subscriptions/{subscription_id}"
         )
         return SubscriptionSchema(**response.data)
