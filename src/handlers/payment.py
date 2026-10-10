@@ -31,9 +31,16 @@ async def check_payment(
     if invoice is None:
         return
 
-    #payment_status = await api_client.check_payment(invoice)
-    #placeholder
-    return
+    payment_status = await api_client.check_payment(invoice_id=invoice.id)
+    if payment_status.status == "success":
+        # Обновить подписку и т.д.
+        pass
+    elif payment_status.status == "new":
+        # Уведомить, ждать
+        pass
+    elif payment_status.status == "failed":
+        # отменить
+        pass
     
 async def cancel_payment(
     update: Update,

@@ -151,9 +151,14 @@ class APIClient():
             )
         )
 
-    #async def check_payment(self, invoice: InvoiceSchema):
-    #    #placeholder
-    #    pass
+    async def check_payment(self, invoice_id: str) -> SubscriptionSchema:
+        response = await self._request(
+            "GET",
+            f"/api/v1/payments/invoices/{invoice_id}"
+        )
+        return SubscriptionSchema(
+            **response.data
+        )
 
     #async def cancel_payment(self, telegram_id: int, invoice: InvoiceSchema):
     #    #placeholder
