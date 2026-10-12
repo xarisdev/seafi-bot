@@ -1,7 +1,7 @@
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.constants import KeyboardButtonStyle
 
-def payment_keyboard(payment_url: str) -> InlineKeyboardMarkup:
+def selected_payment_keyboard(payment_url: str) -> InlineKeyboardMarkup:
     keyboard = [
         [
             InlineKeyboardButton(text="⭐️ Оплатить",

@@ -2,7 +2,7 @@ import logging
 
 from typing import TypeVar, Awaitable, Callable
 
-from ..models.exceptions import APIError, NotFoundError
+from ..services.web.exceptions import APIError, NotFoundError
 
 T = TypeVar("T")
 

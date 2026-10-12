@@ -1,15 +1,14 @@
 import json
-
 import asyncio
 import logging
 
 from websockets.asyncio.client import connect
 
-from ..app.config import settings
+from ..payment_handler import ws_handle_payment_result
 
-from .payment_handler import handle_payment_result
+from ...models.websocket import Payload
 
-from ..models.websocket import Payload
+from ...app.config import settings
 
 logger = logging.getLogger("websocket")
 

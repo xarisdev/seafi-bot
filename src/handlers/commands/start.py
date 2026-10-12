@@ -4,10 +4,10 @@ from telegram import Update
 from telegram.ext import ContextTypes, CommandHandler, ApplicationHandlerStop
 from telegram.error import TelegramError
 
-from ...services.api import api_client
-from ...models.exceptions import NotFoundError, APIError
+from ...services.web.api import api_client
+from ...services.web.exceptions import NotFoundError, APIError
 
-from ...keyboards.menu import menu_keyboard
+from ...keyboards.menu_keyboard import menu_keyboard
 
 from ...security.verify_user import reject_banned
 

@@ -2,13 +2,14 @@ import logging
 
 from telegram.ext import Application
 
-from ..services.api import api_client
-
-from ..models.exceptions import APIError, NotFoundError
+from .web.api import api_client
+from .web.exceptions import APIError, NotFoundError
 
 from ..models.lava import InvoiceSchema
 from ..models.websocket import Payload
 from ..models.subscription import SubscriptionSchema
+
+from .notifications import send_payment_result
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +39,7 @@ async def _server_active_subscription(telegram_id: int) -> SubscriptionSchema | 
         )
         raise
 
-async def handle_payment_result(app: Application, payload: Payload):
+async def ws_handle_payment_result(app: Application, payload: Payload):
     telegram_id = payload.telegram_id
     invoice_id = payload.invoice_id
 
@@ -79,7 +80,7 @@ async def handle_payment_result(app: Application, payload: Payload):
             bot["user_subscriptions"][telegram_id] = subscription
 
         if payload.event_status == "success":
-            await activate_subscription(
+            await _activate_subscription(
                 app=app,
                 telegram_id=telegram_id,
                 invoice=invoice,
@@ -88,7 +89,7 @@ async def handle_payment_result(app: Application, payload: Payload):
             )
 
         elif payload.event_status == "failed":
-            await delete_subscription(
+            await _delete_subscription(
                 app=app,
                 telegram_id=telegram_id,
                 invoice=invoice,
@@ -96,7 +97,9 @@ async def handle_payment_result(app: Application, payload: Payload):
                 payload=payload
             )
 
-async def activate_subscription(
+        send_payment_result(app, telegram_id)
+
+async def _activate_subscription(
     app: Application,
     telegram_id: int,
     invoice: InvoiceSchema,
@@ -126,9 +129,7 @@ async def activate_subscription(
     app.bot_data["user_subscriptions"][telegram_id] = active_subscription
     invoice.status = payload.event_status
 
-    # TODO: user notification
-
-async def delete_subscription(
+async def _delete_subscription(
     app: Application,
     telegram_id: int,
     invoice: InvoiceSchema,
@@ -157,5 +158,3 @@ async def delete_subscription(
     # Если внезапно после неудачно оплаты у сервера осталась другая активная подписка - подменяем, что внутри уже не особо важно
     app.bot_data["user_subscriptions"][telegram_id] = active_subscription
     invoice.status = "success"
-
-    # TODO: user notification

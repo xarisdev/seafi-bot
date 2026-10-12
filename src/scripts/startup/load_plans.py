@@ -1,4 +1,4 @@
-from ...services.api import APIClient
+from ...services.web.api import APIClient
 
 async def load_plans(client: APIClient):
     plans = await client.get_plans()

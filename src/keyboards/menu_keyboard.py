@@ -3,7 +3,7 @@ from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 def menu_keyboard(is_admin: bool = False) -> InlineKeyboardMarkup:
     keyboard = [
         [
-            InlineKeyboardButton("Выбор подписки", callback_data="plan:list")
+            InlineKeyboardButton("Выбор подписки", callback_data="plans:list")
         ],
         [
             InlineKeyboardButton("Настроить фильтр", callback_data="search:edit")
@@ -15,7 +15,13 @@ def menu_keyboard(is_admin: bool = False) -> InlineKeyboardMarkup:
     ]
     if is_admin:
         keyboard.append([
-            InlineKeyboardButton("Настроить тарифы", callback_data="plan:setup")
+            InlineKeyboardButton("Настроить тарифы", callback_data="plans:setup")
         ])
     
+    return InlineKeyboardMarkup(keyboard)
+
+def back_to_menu_keyboard() -> InlineKeyboardMarkup:
+    keyboard = [[
+        InlineKeyboardButton("Вернуться в меню", callback_data="menu:main")
+    ]]
     return InlineKeyboardMarkup(keyboard)

@@ -1,7 +1,7 @@
 from telegram import Update
 from telegram.ext import ContextTypes, CallbackQueryHandler
 
-from ..keyboards.menu import menu_keyboard
+from ..keyboards.menu_keyboard import menu_keyboard
 
 async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query

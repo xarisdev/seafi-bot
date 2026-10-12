@@ -2,10 +2,10 @@ from telegram import Update
 from telegram.ext import ContextTypes, filters
 from telegram.ext import ConversationHandler, CallbackQueryHandler, MessageHandler
 
-from ...keyboards.plan import plan_create_exit, plan_create_confirm
-from ...keyboards.menu import menu_keyboard
+from ...keyboards.plan_keyboard import plan_create_exit, plan_create_confirm
+from ...keyboards.menu_keyboard import menu_keyboard
 
-from ...services.api import api_client, APIError
+from ...services.web.api import api_client, APIError
 from ...models.plan import SubscriptionPlanCreate
 
 WAITING_OFFER_ID = 0
@@ -15,8 +15,8 @@ WAITING_DURATION_HOURS = 3
 WAITING_CONFIRM = 4
 
 async def create_plan_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    context.user_data["plan:create"] = None
-    context.user_data["plan:create:message_ids"] = None
+    context.user_data["plans:create"] = None
+    context.user_data["plans:create:message_ids"] = None
 
     await update.callback_query.edit_message_text(
         "Отмена создания, буфер сброшен",
@@ -35,8 +35,8 @@ async def create_plan_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
-    context.user_data["plan:create"] = {}
-    context.user_data["plan:create:message_ids"] = []
+    context.user_data["plans:create"] = {}
+    context.user_data["plans:create:message_ids"] = []
 
     products = await api_client.get_products()
     text = "Доступные продукты\n\n"
@@ -48,14 +48,14 @@ async def create_plan_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         text+"Введите offer_id",
         reply_markup=plan_create_exit()
     )
-    context.user_data["plan:create:message_ids"].append(message.id)
+    context.user_data["plans:create:message_ids"].append(message.id)
 
     return WAITING_OFFER_ID
 
 async def offer_id_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     offer_id = update.message.text.strip()
     if not offer_id:
-        context.user_data["plan:create:message_ids"].append(update.message.id)
+        context.user_data["plans:create:message_ids"].append(update.message.id)
 
         await update.message.reply_text(
             "Ошибка получения offer_id, введите еще раз.",
@@ -63,15 +63,15 @@ async def offer_id_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    context.user_data["plan:create"]["offer_id"] = offer_id
+    context.user_data["plans:create"]["offer_id"] = offer_id
 
     message = await update.message.reply_text(
         "Введите Заголовок и Описание в формате: title^description",
         reply_markup=plan_create_exit()
     )
 
-    context.user_data["plan:create:message_ids"].append(update.message.id)
-    context.user_data["plan:create:message_ids"].append(message.id)
+    context.user_data["plans:create:message_ids"].append(update.message.id)
+    context.user_data["plans:create:message_ids"].append(message.id)
 
     return WAITING_TITLE_DESCRIPTION
 
@@ -80,7 +80,7 @@ async def title_description_handler(update: Update, context: ContextTypes.DEFAUL
     splitted_text = text.split("^", maxsplit=1)
 
     if len(splitted_text) != 2:
-        context.user_data["plan:create:message_ids"].append(update.message.id)
+        context.user_data["plans:create:message_ids"].append(update.message.id)
 
         await update.message.reply_text(
             f"Ошибка разделения Заголовка и Описания, количество фрагментов: {len(splitted_text)}\nРазделитель: {"^" in text}",
@@ -90,16 +90,16 @@ async def title_description_handler(update: Update, context: ContextTypes.DEFAUL
 
     title = splitted_text[0].strip("\n")
     description = splitted_text[1].strip("\n")
-    context.user_data["plan:create"]["title"] = title
-    context.user_data["plan:create"]["description"] = description
+    context.user_data["plans:create"]["title"] = title
+    context.user_data["plans:create"]["description"] = description
 
     message = await update.message.reply_text(
         "Введите стоимость в USD",
         reply_markup=plan_create_exit()
     )
 
-    context.user_data["plan:create:message_ids"].append(update.message.id)
-    context.user_data["plan:create:message_ids"].append(message.id)
+    context.user_data["plans:create:message_ids"].append(update.message.id)
+    context.user_data["plans:create:message_ids"].append(message.id)
     
     return WAITING_AMOUNT_USD
 
@@ -110,7 +110,7 @@ async def amount_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if amount_usd <= 0:
             raise ValueError
     except ValueError:
-        context.user_data["plan:create:message_ids"].append(update.message.id)
+        context.user_data["plans:create:message_ids"].append(update.message.id)
 
         await update.message.reply_text(
             f"Ошибка конвертации, проверьте ввод: {amount}",
@@ -118,15 +118,15 @@ async def amount_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    context.user_data["plan:create"]["amount_usd"] = amount_usd
+    context.user_data["plans:create"]["amount_usd"] = amount_usd
 
     message = await update.message.reply_text(
         "Введите продолжительность в часах",
         reply_markup=plan_create_exit()
     )
 
-    context.user_data["plan:create:message_ids"].append(update.message.id)
-    context.user_data["plan:create:message_ids"].append(message.id)
+    context.user_data["plans:create:message_ids"].append(update.message.id)
+    context.user_data["plans:create:message_ids"].append(message.id)
 
     return WAITING_DURATION_HOURS
 
@@ -137,7 +137,7 @@ async def duration_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if duration_hours <= 0:
             raise ValueError
     except ValueError:
-        context.user_data["plan:create:message_ids"].append(update.message.id)
+        context.user_data["plans:create:message_ids"].append(update.message.id)
 
         await update.message.reply_text(
             f"Ошибка конвертации, проверьте ввод: {duration}",
@@ -145,9 +145,9 @@ async def duration_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    context.user_data["plan:create"]["duration_hours"] = duration_hours
+    context.user_data["plans:create"]["duration_hours"] = duration_hours
 
-    values = [str(v) for v in context.user_data["plan:create"].values()]
+    values = [str(v) for v in context.user_data["plans:create"].values()]
     text = "Подтвердите создание плана с параметрами:\n"+"\n".join(values)
     
     message = await update.message.reply_text(
@@ -155,14 +155,14 @@ async def duration_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=plan_create_confirm()
     )
 
-    context.user_data["plan:create:message_ids"].append(update.message.id)
+    context.user_data["plans:create:message_ids"].append(update.message.id)
 
     return WAITING_CONFIRM
 
 async def confirm_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         plan = await api_client.create_plan(
-            SubscriptionPlanCreate(**context.user_data["plan:create"])
+            SubscriptionPlanCreate(**context.user_data["plans:create"])
         )
     except APIError as exc:
         await update.callback_query.edit_message_text(
@@ -171,14 +171,14 @@ async def confirm_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    try: await context.bot.delete_messages(update.effective_user.id, context.user_data["plan:create:message_ids"])
+    try: await context.bot.delete_messages(update.effective_user.id, context.user_data["plans:create:message_ids"])
     except: pass
 
     query = update.callback_query
     await query.answer()
 
-    context.user_data["plan:create"] = None
-    context.user_data["plan:create:message_ids"] = None
+    context.user_data["plans:create"] = None
+    context.user_data["plans:create:message_ids"] = None
 
     await query.edit_message_text(
         f"План создан. ID: {plan.id}",
@@ -189,7 +189,7 @@ async def confirm_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 conversation = ConversationHandler(
     entry_points=[
-        CallbackQueryHandler(create_plan_start, pattern="plan:create")
+        CallbackQueryHandler(create_plan_start, pattern="plans:create")
     ],
     states={
         WAITING_OFFER_ID: [
@@ -205,10 +205,10 @@ conversation = ConversationHandler(
             MessageHandler(filters.TEXT & (~filters.COMMAND), duration_handler)
         ],
         WAITING_CONFIRM: [
-            CallbackQueryHandler(confirm_handler, pattern="plan:create:confirm")
+            CallbackQueryHandler(confirm_handler, pattern="plans:create:confirm")
         ]
     },
     fallbacks=[
-        CallbackQueryHandler(create_plan_cancel, pattern="plan:create:exit")
+        CallbackQueryHandler(create_plan_cancel, pattern="plans:create:exit")
     ]
 )

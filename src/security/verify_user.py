@@ -4,8 +4,8 @@ from telegram import Update
 from telegram.ext import ContextTypes, ApplicationHandlerStop, TypeHandler
 from telegram.error import TelegramError
 
-from ..services.api import api_client
-from ..models.exceptions import APIError, NotFoundError
+from ..services.web.api import api_client
+from ..services.web.exceptions import APIError, NotFoundError
 
 logger = logging.getLogger("security.verify_user")
 

@@ -11,7 +11,7 @@ def plans_list_keyboard(
         keyboard.append([
             InlineKeyboardButton(
                 f"{plan.title} · {plan.amount_usd}$",
-                callback_data=f"plan:{plan.id}"
+                callback_data=f"plans:{plan.id}"
             )
         ])
 
@@ -20,12 +20,12 @@ def plans_list_keyboard(
     ])
     return InlineKeyboardMarkup(keyboard)
 
-def plan_info_keyboard(
+def selected_plan_keyboard(
     plan_id: int
 ) -> InlineKeyboardMarkup:
     keyboard = [
-        [InlineKeyboardButton("Выбрать способ оплаты (Lava)", callback_data=f"plan:{plan_id}:pay")],
-        [InlineKeyboardButton("Назад", callback_data="plan:list")]
+        [InlineKeyboardButton("Выбрать способ оплаты (Lava)", callback_data=f"plans:{plan_id}:pay")],
+        [InlineKeyboardButton("Назад", callback_data="plans:list")]
     ]
     return InlineKeyboardMarkup(keyboard)
 
@@ -38,13 +38,13 @@ def payment_methods_keyboard(
         [
             InlineKeyboardButton(
                 text=title,
-                callback_data=f"plan:{plan_id}:pay:{code}"
+                callback_data=f"plans:{plan_id}:pay:{code}"
             )
             for title, code in zip(plan_title, payment_method_codes)
         ]
     ]
     keyboard.append([
-        InlineKeyboardButton("Назад", callback_data=f"plan:{plan_id}")
+        InlineKeyboardButton("Назад", callback_data=f"plans:{plan_id}")
     ])
     
     return InlineKeyboardMarkup(keyboard)
@@ -58,12 +58,12 @@ def plans_edit_keyboard(
         [
             InlineKeyboardButton(
                 f"{plan.title} · {plan.amount_usd}$",
-                callback_data=f"plan:patch:{plan.id}"
+                callback_data=f"plans:patch:{plan.id}"
             )
         ]
         for plan in plans
     ]
-    keyboard.insert(0, [InlineKeyboardButton("Создать", callback_data="plan:create")])
+    keyboard.insert(0, [InlineKeyboardButton("Создать", callback_data="plans:create")])
     keyboard.append([
         InlineKeyboardButton("Назад", callback_data="menu:main")
     ])
@@ -73,7 +73,7 @@ def plan_create_exit() -> InlineKeyboardMarkup:
     keyboard = [[
         InlineKeyboardButton(
             text="Отмена",
-            callback_data=f"plan:create:exit"
+            callback_data=f"plans:create:exit"
         )
     ]]
     return InlineKeyboardMarkup(keyboard)
@@ -83,13 +83,13 @@ def plan_create_confirm() -> InlineKeyboardMarkup:
         [
             InlineKeyboardButton(
                 text="Подтвердить",
-                callback_data=f"plan:create:confirm"
+                callback_data=f"plans:create:confirm"
             )
         ],
         [
             InlineKeyboardButton(
                 text="Выйти",
-                callback_data=f"plan:create:exit"
+                callback_data=f"plans:create:exit"
             )
         ]
     ]
@@ -99,7 +99,7 @@ def plan_patch_exit() -> InlineKeyboardMarkup:
     keyboard = [[
         InlineKeyboardButton(
             text="Отмена",
-            callback_data=f"plan:patch:exit"
+            callback_data=f"plans:patch:exit"
         )
     ]]
     return InlineKeyboardMarkup(keyboard)
@@ -109,13 +109,13 @@ def plan_patch_confirm() -> InlineKeyboardMarkup:
         [
             InlineKeyboardButton(
                 text="Подтвердить",
-                callback_data=f"plan:patch:confirm"
+                callback_data=f"plans:patch:confirm"
             )
         ],
         [
             InlineKeyboardButton(
                 text="Выйти",
-                callback_data=f"plan:patch:exit"
+                callback_data=f"plans:patch:exit"
             )
         ]
     ]

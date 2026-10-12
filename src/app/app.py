@@ -9,8 +9,8 @@ from .config import settings
 
 from ..security.verify_user import verify_handler
 
-from ..services.api import api_client
-from ..services.websocket import websocket_client
+from ..services.web.api import api_client
+from ..services.web.websocket import websocket_client
 
 from ..scripts.utils import safe_load
 from ..scripts.startup.load_superuser import load_superuser
@@ -18,12 +18,12 @@ from ..scripts.startup.load_plans import load_plans
 
 from ..handlers.commands.start import start_command_handler
 from ..handlers.menu import menu_handler
-from ..handlers.plan import (
+from ..handlers.plans import (
     plans_list_handler,
     plans_setup_handler,
     selected_plan_info_handler,
-    plan_payment_methods_handler,
-    selected_plan_payment_handler
+    select_payment_methods_handler,
+    selected_payment_method_handler
 )
 from ..handlers.payment import (
     payment_check_handler,
@@ -96,6 +96,7 @@ def build_application() -> Application:
     application.bot_data["plans"] = {}
     application.bot_data["invoices"] = {}
 
+    application.bot_data["payment_msgs"] = {}
     # ------------ Handlers ------------
     
     application.add_handler(start_command_handler, group=-2)
@@ -108,8 +109,8 @@ def build_application() -> Application:
     application.add_handler(plans_list_handler)
     application.add_handler(plans_setup_handler)
     application.add_handler(selected_plan_info_handler)
-    application.add_handler(plan_payment_methods_handler)
-    application.add_handler(selected_plan_payment_handler)
+    application.add_handler(select_payment_methods_handler)
+    application.add_handler(selected_payment_method_handler)
 
     application.add_handler(payment_check_handler)
     application.add_handler(payment_cancel_handler)
