@@ -9,7 +9,7 @@ from ...services.web.exceptions import NotFoundError, APIError
 
 from ...keyboards.menu_keyboard import menu_keyboard
 
-from ...security.verify_user import reject_banned
+from ..verify_user import reject_banned
 
 logger = logging.getLogger("handlers.commands.start")
 

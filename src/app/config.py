@@ -4,9 +4,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from pathlib import Path
 
 CURRENT_FILE_DIR = Path(__file__).resolve().parent
-ENV_PATH = CURRENT_FILE_DIR.parent.parent / ".env"
+ROOT_DIR = CURRENT_FILE_DIR.parent.parent
 
-PERSISTENCE_FOLDER = CURRENT_FILE_DIR.parent.parent / "data"
+ENV_PATH = ROOT_DIR / ".env"
+
+PERSISTENCE_FOLDER = ROOT_DIR / "data"
 PERSISTENCE_FOLDER.mkdir(exist_ok=True)
 PERSISTENCE_PATH = PERSISTENCE_FOLDER / "persistence.pickle"
 

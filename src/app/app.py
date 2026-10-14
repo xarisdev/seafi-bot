@@ -7,8 +7,6 @@ from telegram.ext import Application
 
 from .config import settings
 
-from ..security.verify_user import verify_handler
-
 from ..services.web.api import api_client
 from ..services.web.websocket import websocket_client
 
@@ -16,21 +14,7 @@ from ..scripts.utils import safe_load
 from ..scripts.startup.load_superuser import load_superuser
 from ..scripts.startup.load_plans import load_plans
 
-from ..handlers.commands.start import start_command_handler
-from ..handlers.menu import menu_handler
-from ..handlers.plans import (
-    plans_list_handler,
-    plans_setup_handler,
-    selected_plan_info_handler,
-    select_payment_methods_handler,
-    selected_payment_method_handler
-)
-from ..handlers.payment import (
-    payment_check_handler,
-    payment_cancel_handler
-)
-from ..handlers.conversations.plan_create import conversation as plan_create_conversation
-from ..handlers.conversations.plan_patch import conversation as plan_patch_conversation
+from ..handlers import handlers
 
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("httpcore").setLevel(logging.WARNING)
@@ -97,22 +81,9 @@ def build_application() -> Application:
     application.bot_data["invoices"] = {}
 
     application.bot_data["payment_msgs"] = {}
+    
     # ------------ Handlers ------------
     
-    application.add_handler(start_command_handler, group=-2)
-    application.add_handler(verify_handler, group=-1)
-
-    application.add_handler(plan_create_conversation)
-    application.add_handler(plan_patch_conversation)
-
-    application.add_handler(menu_handler)
-    application.add_handler(plans_list_handler)
-    application.add_handler(plans_setup_handler)
-    application.add_handler(selected_plan_info_handler)
-    application.add_handler(select_payment_methods_handler)
-    application.add_handler(selected_payment_method_handler)
-
-    application.add_handler(payment_check_handler)
-    application.add_handler(payment_cancel_handler)
+    application.add_handlers(handlers=handlers)
 
     return application
