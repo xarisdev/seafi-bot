@@ -5,8 +5,9 @@ from telegram.ext import ConversationHandler, CallbackQueryHandler, MessageHandl
 from ...keyboards.plan_keyboard import plan_create_exit, plan_create_confirm
 from ...keyboards.menu_keyboard import menu_keyboard
 
-from ...services.web.api import api_client, APIError
-from ...models.plan import SubscriptionPlanCreate
+from ...client.api_client import api_client
+from ...client.models.exceptions import APIException
+from ...client.models.api import PlanCreate
 
 WAITING_OFFER_ID = 0
 WAITING_TITLE_DESCRIPTION = 1
@@ -28,7 +29,7 @@ async def create_plan_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE)
 async def create_plan_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     telegram_id = update.effective_user.id
 
-    is_admin = context.bot_data["users"][telegram_id].get("is_admin", False)
+    is_admin = context.bot_data["user_flags"][telegram_id].get("is_admin", False)
     if not is_admin:
         return ConversationHandler.END
 
@@ -38,10 +39,10 @@ async def create_plan_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["plans:create"] = {}
     context.user_data["plans:create:message_ids"] = []
 
-    products = await api_client.get_products()
+    products = await api_client.get_lava_products()
     text = "Доступные продукты\n\n"
     for product in products:
-        _text = f"Title: {product.title}\nID: {product.id}\nOfferId: {product.offer_id}\n\n"
+        _text = f"Title: {product.title}\nOfferId: {product.offer_id}\n\n"
         text += _text
 
     message = await query.edit_message_text(
@@ -118,7 +119,7 @@ async def amount_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    context.user_data["plans:create"]["amount_usd"] = amount_usd
+    context.user_data["plans:create"]["amount"] = amount_usd
 
     message = await update.message.reply_text(
         "Введите продолжительность в часах",
@@ -145,7 +146,7 @@ async def duration_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    context.user_data["plans:create"]["duration_hours"] = duration_hours
+    context.user_data["plans:create"]["duration"] = duration_hours
 
     values = [str(v) for v in context.user_data["plans:create"].values()]
     text = "Подтвердите создание плана с параметрами:\n"+"\n".join(values)
@@ -162,11 +163,11 @@ async def duration_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def confirm_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         plan = await api_client.create_plan(
-            SubscriptionPlanCreate(**context.user_data["plans:create"])
+            PlanCreate(**context.user_data["plans:create"])
         )
-    except APIError as exc:
+    except APIException:
         await update.callback_query.edit_message_text(
-            f"Ошибка связи с сервером, {exc}",
+            f"Сервер вернул ошибку",
             reply_markup=plan_create_confirm()
         )
         return

@@ -4,8 +4,8 @@ from telegram import Update
 from telegram.ext import ContextTypes, CommandHandler, ApplicationHandlerStop
 from telegram.error import TelegramError
 
-from ...services.web.api import api_client
-from ...services.web.exceptions import NotFoundError, APIError
+from ...client.api_client import api_client
+from ...client.models.exceptions import APIException, NotFoundError
 
 from ...keyboards.menu_keyboard import menu_keyboard
 
@@ -62,11 +62,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         except NotFoundError:
             try:
                 db_user = await api_client.create_user(telegram_id)
-            except APIError as e:
-                logger.warning(
-                    "APIError: %s | %s | %s", e.status_code, e.message, e.args,
-                    exc_info=True
-                )
+            except APIException:
                 await safe_send(
                     chat_id=chat_id,
                     context=context,
@@ -74,11 +70,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 )
                 raise ApplicationHandlerStop
 
-        except APIError as e:
-            logger.warning(
-                "APIError: %s | %s | %s", e.status_code, e.message, e.args,
-                exc_info=True
-            )
+        except APIException:
             await safe_send(
                 chat_id=chat_id,
                 context=context,
@@ -95,8 +87,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 "is_banned": False
             }
 
-        # TODO: Проверка наличия подписки (server) -> флаг (bot)
-        # bot_data["user_subscriptions"][subscription.id] = subscription or None
+        # ------------ Check Subscription ------------
+        # ЕСЛИ есть запись о подписке - игнор
+        # ЕСЛИ НЕТ записи о подпоиске - стучимся в сервер
+        # --------------------------------------------
         
     await safe_send(
         update=update,

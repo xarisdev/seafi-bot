@@ -4,8 +4,8 @@ from telegram import Update
 from telegram.ext import ContextTypes, ApplicationHandlerStop, TypeHandler
 from telegram.error import TelegramError
 
-from ..services.web.api import api_client
-from ..services.web.exceptions import APIError, NotFoundError
+from ..client.api_client import api_client
+from ..client.models.exceptions import APIException, NotFoundError
 
 logger = logging.getLogger("security.verify_user")
 
@@ -47,11 +47,11 @@ async def reject_banned(update, context, flags) -> None:
         except NotFoundError:
             return
         
-        except APIError as e:
-            logger.warning(
+        except APIException:
+            """logger.warning(
                 "APIError: %s | %s | %s", e.status_code, e.message, e.args,
                 exc_info=True
-            )
+            )"""
             await notify_msg(
                 context=context,
                 chat_id=chat_id,
@@ -114,11 +114,11 @@ async def verify_user_exists(
                 )
                 raise ApplicationHandlerStop
         
-            except APIError as e:
-                logger.warning(
+            except APIException:
+                """logger.warning(
                     "APIError: %s | %s | %s", e.status_code, e.message, e.args,
                     exc_info=True
-                )
+                )"""
                 await notify_msg(
                     context=context,
                     chat_id=chat_id,

@@ -1,16 +1,16 @@
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 
-from ..models.plan import SubscriptionPlanRead
+from ..client.models.api import Plan
 
 def plans_list_keyboard(
-    plans: list[SubscriptionPlanRead]
+    plans: list[Plan]
 ) -> InlineKeyboardMarkup:
     keyboard = []
 
     for plan in plans:
         keyboard.append([
             InlineKeyboardButton(
-                f"{plan.title} · {plan.amount_usd}$",
+                f"{plan.title} · {plan.amount}$",
                 callback_data=f"plans:{plan.id}"
             )
         ])
@@ -52,12 +52,12 @@ def payment_methods_keyboard(
 # ------------ Admin keyboards ------------
 
 def plans_edit_keyboard(
-    plans: list[SubscriptionPlanRead]
+    plans: list[Plan]
 ) -> InlineKeyboardMarkup:
     keyboard = [
         [
             InlineKeyboardButton(
-                f"{plan.title} · {plan.amount_usd}$",
+                f"{plan.title} · {plan.amount}$",
                 callback_data=f"plans:patch:{plan.id}"
             )
         ]

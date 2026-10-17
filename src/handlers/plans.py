@@ -8,12 +8,11 @@ from ..keyboards.plan_keyboard import (
     plans_edit_keyboard,
     payment_methods_keyboard
 )
-from ..keyboards.payment_keyboard import selected_payment_keyboard
+from ..keyboards.payment_keyboard import selected_payment_keyboard, cancel_old_invoice_keyboard
 
-from ..models.plan import SubscriptionPlanRead
-
-from ..services.web.api import api_client
-from ..services.web.exceptions import APIError, NotFoundError
+from ..client.api_client import api_client
+from ..client.models.exceptions import APIException, NotFoundError, BadRequestError
+from ..client.models.api import Plan
 
 # ------------ Utils ------------
 
@@ -25,15 +24,15 @@ def plan_formatting(title: str, amount: float) -> str:
     )
     return text
 
-def plan_info_formatting(plan: SubscriptionPlanRead) -> str:
-    amount_kgs = int(87 * plan.amount_usd)
-    amount_rub = int(85 * plan.amount_usd)
+def plan_info_formatting(plan: Plan) -> str:
+    amount_kgs = int(87 * plan.amount)
+    amount_rub = int(85 * plan.amount)
 
     text = (
         f'<b>План:</b> "{plan.title}"\n\n'
         f'{plan.description}\n\n'
-        f'<b>💲{plan.amount_usd}$ · ~{amount_kgs} сом · ~{amount_rub} ₽</b>\n'
-        f'<b>⏱ {plan.duration_hours//24} д.</b>'
+        f'<b>💲{plan.amount}$ · ~{amount_kgs} сом · ~{amount_rub} ₽</b>\n'
+        f'<b>⏱ {plan.duration//24} д.</b>'
     )
     return text
 
@@ -53,8 +52,8 @@ async def get_selected_plan(
     query: CallbackQuery,
     plan_id: int,
     bot_data: dict,
-) -> SubscriptionPlanRead | None:
-    plans: dict[int, SubscriptionPlanRead] = bot_data.get("plans", {})
+) -> Plan | None:
+    plans: dict[int, Plan] = bot_data.get("plans", {})
     plans_list = [plan for plan in plans.values()]
 
     selected_plan = plans.get(plan_id)
@@ -75,7 +74,7 @@ async def plans_list(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
 
     plans = context.bot_data.get("plans", {})
-    plans_list = [plan for plan in plans.values()]
+    plans_list: list[Plan] = [plan for plan in plans.values()]
 
     text = (
         "Автоматический поиск свежих объявлений по вашим фильтрам 🔎\n\n"
@@ -83,10 +82,9 @@ async def plans_list(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
     for plan in plans_list:
-        plan: SubscriptionPlanRead
         text += plan_formatting(
             title=plan.title,
-            amount=plan.amount_usd
+            amount=plan.amount
         )
 
     await query.edit_message_text(
@@ -108,7 +106,7 @@ async def selected_plan_info(update: Update, context: ContextTypes.DEFAULT_TYPE)
         bot_data=context.bot_data
     )
     if selected_plan is None:
-        return
+        return # TODO
 
     text = plan_info_formatting(selected_plan)
 
@@ -131,7 +129,7 @@ async def select_payment_methods(update: Update, context: ContextTypes.DEFAULT_T
         bot_data=context.bot_data
     )
     if selected_plan is None:
-        return
+        return # TODO
     #                                                                to future: need api
     keyboard = payment_methods_keyboard(
         plan_id,
@@ -168,28 +166,38 @@ async def selected_payment_method(update: Update, context: ContextTypes.DEFAULT_
         if selected_plan is None:
             return
 
-        payment_schema = await api_client.create_payment_link(
-            plan_id=selected_plan.id,
-            telegram_id=telegram_id,
-            currency=currency
-        )
-        invoice = payment_schema.invoice
-        subscription = payment_schema.subscription
+        try:
+            invoice = await api_client.create_invoice(
+                plan_id=selected_plan.id,
+                currency=currency,
+                telegram_id=telegram_id
+            )
+        except BadRequestError:
+            await query.edit_message_text(
+                "У вас осталась незавершенная оплата.\n\nНажмите ниже чтобы отменить:",
+                reply_markup=cancel_old_invoice_keyboard()
+            )
+            return
+        
+        except APIException:
+            await query.edit_message_text("Ошибка связи с сервером, попробуйте позднее")
+            return
 
-        context.bot_data["invoices"][invoice.id] = invoice
-        context.bot_data["user_subscriptions"][telegram_id] = subscription
+        keyboard = selected_payment_keyboard(payment_url=invoice.payment_url)
 
-        context.bot_data["payment_msgs"][telegram_id] = query.message.message_id
+        context.bot_data["pending_invoices"][telegram_id] = invoice
+        context.bot_data["payment_messages"][telegram_id] = query.message.message_id
+        context.bot_data["payment_keyboard"][telegram_id] = keyboard
 
     text = (
         f"<b>Ссылка на оплату - {selected_plan.title}</b>\n\n"
-        f"{to_pay_text(selected_plan.amount_usd, currency)}"
+        f"{to_pay_text(selected_plan.amount, currency)}"
         f"<b>Важно: </b>"
-        f"<i>Ссылка действительная в течение {invoice.payment_timeout_s//60} минут</i>"
+        f"<i>Ссылка действительная в течение 15 минут</i>"
     )
     await query.edit_message_text(
         text=text,
-        reply_markup=selected_payment_keyboard(payment_url=invoice.paymentUrl),
+        reply_markup=keyboard,
         parse_mode=ParseMode.HTML
     )
 
@@ -212,9 +220,9 @@ async def plans_setup(update: Update, context: ContextTypes.DEFAULT_TYPE):
         except NotFoundError:
             plans = []
         
-        except APIError as err:
+        except APIException:
             await query.edit_message_text(
-                f"Сервер вернул ошибку: {err.status_code}\n{err.message}",
+                f"Сервер вернул ошибку:",
                 reply_markup=plans_list_keyboard(plans)
             )
             return

@@ -5,8 +5,9 @@ from telegram.ext import ConversationHandler, CallbackQueryHandler, MessageHandl
 from ...keyboards.plan_keyboard import plan_patch_exit, plan_patch_confirm
 from ...keyboards.menu_keyboard import menu_keyboard
 
-from ...services.web.api import api_client, APIError
-from ...models.plan import SubscriptionPlanUpdate, SubscriptionPlanRead
+from ...client.api_client import api_client
+from ...client.models.exceptions import APIException
+from ...client.models.api import Plan, PlanUpdate
 
 WAITING_TITLE_DESCRIPTION = 0
 WAITING_AMOUNT_USD = 1
@@ -15,14 +16,14 @@ WAITING_CONFIRM = 3
 
 # ------------ Scripts ------------
 
-def plan_info_str(plan: SubscriptionPlanRead):
+def plan_info_str(plan: Plan):
     text = (
         "Информация:\n\n"
         f"Id: {plan.id}\n"
         f"Title: {plan.title}\n"
         f"Description: {plan.description}\n"
-        f"Amount USD: {plan.amount_usd}\n"
-        f"Duration H: {plan.duration_hours}\n\n"
+        f"Amount USD: {plan.amount}\n"
+        f"Duration H: {plan.duration}\n\n"
     )
     return text
 
@@ -53,7 +54,7 @@ async def patch_plan_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["plans:patch:message_ids"] = []
 
     plan_id = query.data.split(":")[-1]
-    plan: SubscriptionPlanRead = context.bot_data["plans"][int(plan_id)]
+    plan: Plan = context.bot_data["plans"][int(plan_id)]
     context.user_data["plans:patch"] = plan
     
     message = await query.edit_message_text(
@@ -108,7 +109,7 @@ async def amount_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    context.user_data["plans:patch"].amount_usd = amount_usd
+    context.user_data["plans:patch"].amount = amount_usd
 
     message = await update.message.reply_text(
         plan_info_str(context.user_data["plans:patch"])+"Введите продолжительность в часах",
@@ -135,7 +136,7 @@ async def duration_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    context.user_data["plans:patch"].duration_hours = duration_hours
+    context.user_data["plans:patch"].duration = duration_hours
     
     message = await update.message.reply_text(
         plan_info_str(context.user_data["plans:patch"])+"Подтвердите изменение",
@@ -151,14 +152,14 @@ async def confirm_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
 
     try:
-        plan_update: SubscriptionPlanRead = context.user_data["plans:patch"]
+        plan_update: Plan = context.user_data["plans:patch"]
         plan = await api_client.patch_plan(
             plan_id=plan_update.id,
-            data=SubscriptionPlanUpdate(**plan_update.model_dump())
+            data=PlanUpdate(**plan_update.model_dump())
         )
-    except APIError as exc:
+    except APIException:
         await update.callback_query.edit_message_text(
-            f"Ошибка связи с сервером, {exc}",
+            f"Сервер вернул ошибку",
             reply_markup=plan_patch_confirm()
         )
         return

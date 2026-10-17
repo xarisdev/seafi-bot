@@ -18,3 +18,17 @@ def selected_payment_keyboard(payment_url: str) -> InlineKeyboardMarkup:
         ]
     ]
     return InlineKeyboardMarkup(keyboard)
+
+def cancel_old_invoice_keyboard() -> InlineKeyboardMarkup:
+    keyboard = [
+        [
+            InlineKeyboardButton(text="❌ Отменить",
+                                 callback_data="payment:cancel",
+                                 style=KeyboardButtonStyle.DANGER)
+        ],
+        [
+            InlineKeyboardButton(text="Проверить",
+                                 callback_data="payment:check")
+        ]
+    ]
+    return InlineKeyboardMarkup(keyboard)
