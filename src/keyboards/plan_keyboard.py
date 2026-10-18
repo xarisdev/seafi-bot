@@ -16,7 +16,7 @@ def plans_list_keyboard(
         ])
 
     keyboard.append([
-        InlineKeyboardButton("Назад", callback_data="menu:main")
+        InlineKeyboardButton("◀️ Назад", callback_data="menu:main")
     ])
     return InlineKeyboardMarkup(keyboard)
 
@@ -24,8 +24,8 @@ def selected_plan_keyboard(
     plan_id: int
 ) -> InlineKeyboardMarkup:
     keyboard = [
-        [InlineKeyboardButton("Выбрать способ оплаты (Lava)", callback_data=f"plans:{plan_id}:pay")],
-        [InlineKeyboardButton("Назад", callback_data="plans:list")]
+        [InlineKeyboardButton("💳 Выбрать способ оплаты (Lava)", callback_data=f"plans:{plan_id}:pay")],
+        [InlineKeyboardButton("◀️ Назад", callback_data="plans:list")]
     ]
     return InlineKeyboardMarkup(keyboard)
 
@@ -44,7 +44,7 @@ def payment_methods_keyboard(
         ]
     ]
     keyboard.append([
-        InlineKeyboardButton("Назад", callback_data=f"plans:{plan_id}")
+        InlineKeyboardButton("◀️ Назад", callback_data=f"plans:{plan_id}")
     ])
     
     return InlineKeyboardMarkup(keyboard)

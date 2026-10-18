@@ -18,7 +18,7 @@ def info_keyboard() -> InlineKeyboardMarkup:
         ],
         [
             InlineKeyboardButton(
-                text="Назад",
+                text="◀️ Назад",
                 callback_data="menu:main"
             )
         ]

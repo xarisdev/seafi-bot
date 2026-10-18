@@ -27,7 +27,7 @@ def cancel_old_invoice_keyboard() -> InlineKeyboardMarkup:
                                  style=KeyboardButtonStyle.DANGER)
         ],
         [
-            InlineKeyboardButton(text="Проверить",
+            InlineKeyboardButton(text="🔄 Проверить",
                                  callback_data="payment:check")
         ]
     ]

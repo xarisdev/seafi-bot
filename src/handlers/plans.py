@@ -77,7 +77,7 @@ async def plans_list(update: Update, context: ContextTypes.DEFAULT_TYPE):
     plans_list: list[Plan] = [plan for plan in plans.values()]
 
     text = (
-        "Автоматический поиск свежих объявлений по вашим фильтрам 🔎\n\n"
+        "✨Свежие объявления о недвижимости — без ручного поиска\n\n"
         "<b>▼// Доступные планы:</b>\n\n"
     )
 
@@ -106,7 +106,7 @@ async def selected_plan_info(update: Update, context: ContextTypes.DEFAULT_TYPE)
         bot_data=context.bot_data
     )
     if selected_plan is None:
-        return # TODO
+        return
 
     text = plan_info_formatting(selected_plan)
 
@@ -129,7 +129,7 @@ async def select_payment_methods(update: Update, context: ContextTypes.DEFAULT_T
         bot_data=context.bot_data
     )
     if selected_plan is None:
-        return # TODO
+        return
     #                                                                to future: need api
     keyboard = payment_methods_keyboard(
         plan_id,
@@ -191,7 +191,7 @@ async def selected_payment_method(update: Update, context: ContextTypes.DEFAULT_
 
     text = (
         f"<b>Ссылка на оплату - {selected_plan.title}</b>\n\n"
-        f"{to_pay_text(selected_plan.amount, currency)}"
+        f"{to_pay_text(selected_plan.amount, currency)}\n\n"
         f"<b>Важно: </b>"
         f"<i>Ссылка действительная в течение 15 минут</i>"
     )
