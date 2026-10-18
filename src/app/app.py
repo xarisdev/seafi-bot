@@ -5,6 +5,8 @@ from collections import defaultdict
 
 from telegram.ext import Application
 
+from .cache.base import bot_data_saver
+
 from ..client.api_client import api_client
 from ..client.wss_client import wss_client
 
@@ -23,6 +25,8 @@ async def on_startup(app: Application):
     api_client.startup(application=app)
     wss_client.start(application=app)
 
+    await bot_data_saver.start(app.bot_data)
+
     await synch_superuser(
         application=app,
         api_client=api_client,
@@ -36,10 +40,11 @@ async def on_startup(app: Application):
     
     logger.debug("startup success")
 
-
 async def on_shutdown(app: Application):
     await wss_client.close()
     await api_client.shutdown()
+
+    await bot_data_saver.stop()
 
     logger.debug("shutdown success")
 

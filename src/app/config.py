@@ -8,15 +8,9 @@ ROOT_DIR = CURRENT_FILE_DIR.parent.parent
 
 ENV_PATH = ROOT_DIR / ".env"
 
-PERSISTENCE_FOLDER = ROOT_DIR / "data"
-PERSISTENCE_FOLDER.mkdir(exist_ok=True)
-PERSISTENCE_PATH = PERSISTENCE_FOLDER / "persistence.pickle"
-
 class Application(BaseSettings):
     ADMIN_ID: int
     TELEGRAM_BOT_TOKEN: str
-
-    PERSISTENCE_PATH: str = str(PERSISTENCE_PATH)
 
     model_config = SettingsConfigDict(
         env_file=ENV_PATH,
