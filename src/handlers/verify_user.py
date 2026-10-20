@@ -48,10 +48,10 @@ async def reject_banned(update, context, flags) -> None:
             return
         
         except APIException:
-            """logger.warning(
-                "APIError: %s | %s | %s", e.status_code, e.message, e.args,
+            logger.warning(
+                "APIError: %s", e.args,
                 exc_info=True
-            )"""
+            )
             await notify_msg(
                 context=context,
                 chat_id=chat_id,

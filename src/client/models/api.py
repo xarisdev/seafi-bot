@@ -72,7 +72,7 @@ class Subscription(BaseModel):
 class WebSocketMessage(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: UUID
+    id: str
     buyer_email: str
     contract_id: str
     invoice_status: str

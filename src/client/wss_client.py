@@ -78,8 +78,13 @@ class WSSClient():
             logger.info("Recieve duplicate websocket [%s]",
                         message.id)
             return
-        
-        self.application.bot_data["recieved_websockets"][message.id] = message
+
+        logger.info(
+            "Recieve websocket: %s",
+            message.model_dump()
+        )
+
+        self.application.bot_data["recieved_websockets"][message.id] = message.model_dump(mode="json")
 
         await check_payment_at_wss(
             application=self.application,

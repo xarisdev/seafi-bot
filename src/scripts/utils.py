@@ -22,7 +22,7 @@ async def _safe_load(
     except NotFoundError:
         logger.warning("%s: not found", message)
     except APIException as e:
-        logger.warning("%s: APIError | %s | %s", message, e.status_code, e.message)
+        logger.warning("%s: APIError | %s ", message, e.details)
     return default
 
 async def synch_superuser(

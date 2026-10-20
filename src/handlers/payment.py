@@ -18,7 +18,7 @@ logger = logging.getLogger("handlers.payment")
 
 # ------------ Utils ------------
 
-def timeout(now: datetime, last_check: datetime | None) -> timedelta | None:
+def timeout(now: datetime, last_check: datetime | None) -> float | None:
     if last_check is None:
         return None
 
@@ -77,7 +77,8 @@ async def cancel_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     status="pending"
                 )
                 if len(invoices) < 1:
-                    logger.warning("User %s has not pending invoices. Cancelled: 0")
+                    logger.warning("User %s has not pending invoices. Cancelled: 0",
+                                   telegram_id)
                     await query.edit_message_text(
                         "Ожидающие платежи не найдены",
                         reply_markup=back_to_menu_keyboard()

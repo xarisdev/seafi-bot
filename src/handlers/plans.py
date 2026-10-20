@@ -1,3 +1,5 @@
+import logging
+
 from telegram import Update, CallbackQuery
 from telegram.constants import ParseMode
 from telegram.ext import ContextTypes, CallbackQueryHandler
@@ -13,6 +15,8 @@ from ..keyboards.payment_keyboard import selected_payment_keyboard, cancel_old_i
 from ..client.api_client import api_client
 from ..client.models.exceptions import APIException, NotFoundError, BadRequestError
 from ..client.models.api import Plan
+
+logger = logging.getLogger("handlers.plans")
 
 # ------------ Utils ------------
 
@@ -179,7 +183,8 @@ async def selected_payment_method(update: Update, context: ContextTypes.DEFAULT_
             )
             return
         
-        except APIException:
+        except APIException as e:
+            logger.error("Create invoice error")
             await query.edit_message_text("Ошибка связи с сервером, попробуйте позднее")
             return
 
