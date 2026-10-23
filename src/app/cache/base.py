@@ -6,6 +6,8 @@ import asyncio
 from .filters import filters
 from .config import BOT_DATA_PATH
 
+from .loader import serialize_data
+
 logger = logging.getLogger("app.cache.base")
 
 class BotDataSaver:
@@ -51,8 +53,12 @@ class BotDataSaver:
                 self.path.read_text,
                 encoding="utf-8"
             )
-            # ------------ TODO ------------
-            # self.bot_data.update(json.loads(data))
+            result = await serialize_data(
+                json.loads(data)
+            )
+
+            for key, value in result.items():
+                self.bot_data[key] = value
 
     async def save(self):
         async with self.lock:

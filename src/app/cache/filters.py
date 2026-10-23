@@ -1,11 +1,13 @@
-from .config import filter_configurations
+from .config import filter_configurations, models_configurations
 
 class DataFilter:
     def __init__(
         self,
         input_data_key: str,
         output_data_key: str | None = None,
-        params_to_record: list | None = None
+        params_to_record: list | None = None,
+        key_type: str = "str",
+        model_name: str | None = None
     ) -> None:
         """
         Args:
@@ -15,6 +17,8 @@ class DataFilter:
             params_to_record (:obj:`list`, optional): Список параметров для записи.
                 Если список пустой - запишет список ключей фильтруемого словаря.
                 Если `None` - запишет все значения для каждого ключа в фильтруемом словаре.
+            key_type (:obj:`str`, optional): Тип ключа или значений внутри списка.
+            model_name (:obj:`str`, optional): Имя pydantic модели. См. список `models_configurations`.
         """
         if output_data_key is None:
             output_data_key = input_data_key
@@ -23,6 +27,10 @@ class DataFilter:
         self.output_data_key = output_data_key
 
         self.params_to_record = params_to_record
+
+        self.key_type = str if key_type == "str" else int
+
+        self.model_name = model_name
 
     def serizalize(self, data: dict) -> dict:
         output = {}
@@ -64,6 +72,26 @@ class DataFilter:
 
             if _key_dict:
                 output[self.output_data_key][key] = _key_dict
+
+        return output
+
+    def deserialize(self, data: dict | list) -> dict | list:
+        output = {}
+
+        if isinstance(data, list):
+            output = [self.key_type(key) for key in data]
+            return output
+
+        for key, value in data.items():
+            try: key = self.key_type(key)
+            except: pass
+
+            model = None
+            base_model = models_configurations.get(self.model_name)
+            if base_model is not None:
+                model = base_model(**value)
+
+            output[key] = value or model
 
         return output
 

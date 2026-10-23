@@ -1,4 +1,4 @@
-from uuid import UUID
+from enum import Enum
 from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
@@ -47,6 +47,12 @@ class Invoice(BaseModel):
     currency: str
     amount_total: str
     created_at: datetime
+
+class EnumInvoiceStatus(str, Enum):
+    PENDING = "pending"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+    COMPLETED = "completed"
 
 
 class LavaProduct(BaseModel):

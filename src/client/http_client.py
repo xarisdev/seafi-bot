@@ -44,7 +44,7 @@ class HTTPClient():
 
     async def _request(self, *args, **kwargs) -> httpx.Response:
         try:
-            return await self.client.request(*args, **kwargs)
+            return await self.client.request(*args, **kwargs, timeout=15.0)
 
         except httpx.RequestError as exc:
             raise NetworkError("Request failed") from exc

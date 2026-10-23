@@ -55,6 +55,13 @@ class APIClient():
         )
         return User(**response.response_json)
 
+    async def get_user_by_id(self, user_id: int) -> User:
+        response = await self._http_client.request(
+            method="GET",
+            url=f"/api/v1/users?id={user_id}"
+        )
+        return User(**response.response_json)
+
     # ------------ Plans ------------
 
     async def create_plan(self, plan_create: PlanCreate) -> Plan:

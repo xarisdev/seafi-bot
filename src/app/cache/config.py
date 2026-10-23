@@ -1,5 +1,7 @@
 from pathlib import Path
 
+from ...client.models.api import WebSocketMessage
+
 BOT_DATA_FOLDER = Path(__file__).resolve().parent.parent.parent.parent / "data"
 BOT_DATA_FOLDER.mkdir(parents=True, exist_ok=True)
 BOT_DATA_PATH = BOT_DATA_FOLDER / "bot_data_cache.json"
@@ -10,19 +12,28 @@ if not BOT_DATA_PATH.exists():
 
 filter_configurations = {
     "websockets_filter": {
-        "input_data_key": "recieved_websockets"
+        "input_data_key": "recieved_websockets",
+        "key_type": "str",
+        "model_name": "WebSocketMessage"
     },
     "invoices_filter": {
         "input_data_key": "pending_invoices",
         "output_data_key": "invoices_to_recover",
-        "params_to_record": ["id"]
+        "params_to_record": ["id"],
+        "key_type": "str"
     },
     "subscriptions_filter": {
         "input_data_key": "subscriptions",
         "output_data_key": "subscriptions_to_recover",
-        "params_to_record": []
+        "params_to_record": [],
+        "key_type": "int"
     },
     "user_flags_filter": {
-        "input_data_key": "user_flags"
+        "input_data_key": "user_flags",
+        "key_type": "int"
     }
+}
+
+models_configurations = {
+    "WebSocketMessage": WebSocketMessage
 }

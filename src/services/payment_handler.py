@@ -1,11 +1,9 @@
 import logging
 
-from enum import Enum
-
 from telegram.ext import Application
 
 from ..client.api_client import api_client
-from ..client.models.api import Invoice, WebSocketMessage
+from ..client.models.api import Invoice, EnumInvoiceStatus, WebSocketMessage
 from ..client.models.exceptions import APIException, NotFoundError
 
 from .notifications import notification_constructor
@@ -13,12 +11,6 @@ from .notifications import notification_constructor
 from ..scripts.helpers.sub_info import subscription_info
 
 logger = logging.getLogger("services.payment_handler")
-
-class EnumInvoiceStatus(str, Enum):
-    PENDING = "pending"
-    FAILED = "failed"
-    CANCELLED = "cancelled"
-    COMPLETED = "completed"
 
 # ------------ Helpers ------------
 

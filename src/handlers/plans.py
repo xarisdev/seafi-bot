@@ -184,7 +184,7 @@ async def selected_payment_method(update: Update, context: ContextTypes.DEFAULT_
             return
         
         except APIException as e:
-            logger.error("Create invoice error")
+            logger.error("Create invoice error | %s", e.args)
             await query.edit_message_text("Ошибка связи с сервером, попробуйте позднее")
             return
 
