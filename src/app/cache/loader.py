@@ -15,15 +15,16 @@ async def serialize_data(data: dict[str, Any]) -> dict[str, Any]:
         key = filter.input_data_key
         values = data.get(filter.output_data_key)
 
+        if values is None:
+            continue
+
         serialized_data = filter.deserialize(data=values)
 
         # ------------ API check ------------
         
-        # Проверка всех "pending_invoices" через API. Записывает только в состоянии "pending"
         if key == "pending_invoices":
             result = await invoices_sync(serialized_data)
 
-        # Замена subscriptions: list -> dict через API
         elif key == "subscriptions":
             result = await subscriptions_sync(serialized_data)
 

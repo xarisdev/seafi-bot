@@ -83,8 +83,8 @@ async def _synch_subscription(application: Application, telegram_id: int):
 async def _compare_invoice_status(application, telegram_id: int, invoice_status: str):
     bot_data = application.bot_data
 
-    _message_id = bot_data["payment_messages"].pop(telegram_id, None)
-    _payment_keyboard = bot_data["payment_keyboard"].pop(telegram_id, None)
+    _message_id = bot_data["payment_messages"].get(telegram_id)
+    _payment_keyboard = bot_data["payment_keyboard"].get(telegram_id)
 
     if invoice_status == EnumInvoiceStatus.PENDING:
         await notification_constructor(
@@ -96,8 +96,10 @@ async def _compare_invoice_status(application, telegram_id: int, invoice_status:
             _message_id=_message_id,
             _custom_reply_markup=_payment_keyboard
         )
+
+        return
     
-    elif invoice_status == EnumInvoiceStatus.FAILED:
+    if invoice_status == EnumInvoiceStatus.FAILED:
         await notification_constructor(
             application=application,
             chat_id=telegram_id,
@@ -136,6 +138,8 @@ async def _compare_invoice_status(application, telegram_id: int, invoice_status:
         logger.error("Unknown invoice status: %s", invoice_status)
 
     bot_data["pending_invoices"].pop(telegram_id, None)
+    bot_data["payment_messages"].pop(telegram_id, None)
+    bot_data["payment_keyboard"].pop(telegram_id, None)
 
 # ------------ Handlers ------------
 

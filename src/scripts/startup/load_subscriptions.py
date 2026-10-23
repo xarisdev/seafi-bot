@@ -10,8 +10,6 @@ logger = logging.getLogger("scripts.startup.subscriptions")
 async def subscriptions_sync(telegram_ids: list[int]) -> dict[int, Subscription]:
     max_count = len(telegram_ids)
     output = {}
-
-    logger.info("Subscriptions to load: %s", max_count)
     
     for i, telegram_id in enumerate(telegram_ids):
         try:

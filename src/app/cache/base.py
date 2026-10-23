@@ -24,6 +24,8 @@ class BotDataSaver:
         await self.load()
 
         self.task = asyncio.create_task(self.run())
+        
+        logger.info("Started")
 
     async def stop(self):
         if self.task:
@@ -37,6 +39,8 @@ class BotDataSaver:
 
         await self.save()
 
+        logger.info("Stopped")
+
     async def run(self):
         while True:
             await asyncio.sleep(60)
@@ -48,6 +52,8 @@ class BotDataSaver:
                 logger.exception("Failed to save bot_data")
 
     async def load(self):
+        logger.debug("Loading cache data")
+
         async with self.lock:
             data = await asyncio.to_thread(
                 self.path.read_text,
@@ -60,7 +66,11 @@ class BotDataSaver:
             for key, value in result.items():
                 self.bot_data[key] = value
 
+        logger.info("Cache data loaded")
+
     async def save(self):
+        logger.debug("Saving cache data")
+
         async with self.lock:
             output = {}
 
@@ -72,6 +82,8 @@ class BotDataSaver:
                               ensure_ascii=False,
                               indent=4)
             await asyncio.to_thread(self._write, data)
+
+        logger.info("Cache saved")
 
     def _write(self, data):
         self.path.parent.mkdir(parents=True, exist_ok=True)

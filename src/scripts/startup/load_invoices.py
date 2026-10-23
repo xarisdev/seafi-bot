@@ -7,28 +7,29 @@ from ...client.models.api import Invoice, EnumInvoiceStatus
 
 logger = logging.getLogger("scripts.startup.invoices")
 
-async def invoices_sync(invoice_ids: list[int]) -> dict[int, Invoice]:
-    max_count = len(invoice_ids)
+async def invoices_sync(invoices: dict[int, dict]) -> dict[int, Invoice]:
+    count = 0
+    max_count = len(invoices)
+    
     output = {}
 
-    logger.info("Invoices to load: %s", max_count)
-    
-    for i, invoice_id in enumerate(invoice_ids):
+    for telegram_id, invoice_data in invoices.items():
+        invoice_id = invoice_data.get("id")
+
+        count += 1
+
         try:
             invoice = await api_client.check_invoice(invoice_id=invoice_id)
-            invoice_model = Invoice(**invoice)
 
-            if invoice_model.status == EnumInvoiceStatus.PENDING:
-                user = await api_client.get_user_by_id(user_id=invoice_model.user_id)
-                
+            if invoice.status == EnumInvoiceStatus.PENDING:
                 logger.debug("[%s/%s] Load invoice: %s",
-                             i, max_count,
+                             count, max_count,
                              invoice_id)
                 
-                output[user.telegram_id] = invoice
+                output[telegram_id] = invoice
             
             else:
-                logger.debug("Skip invoice, status: %s", invoice_model.status)
+                logger.debug("Skip invoice, status: %s", invoice.status)
 
         except NotFoundError:
             logger.warning("NotFoundError while load invoice: %s",

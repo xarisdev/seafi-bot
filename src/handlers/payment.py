@@ -7,7 +7,7 @@ from telegram.constants import ParseMode
 from telegram.ext import ContextTypes, CallbackQueryHandler
 
 from ..keyboards.menu_keyboard import back_to_menu_keyboard
-from ..keyboards.plan_keyboard import selected_plan_keyboard
+from ..keyboards.payment_keyboard import selected_payment_keyboard
 
 from ..client.api_client import api_client
 from ..client.models.exceptions import APIException
@@ -18,13 +18,14 @@ logger = logging.getLogger("handlers.payment")
 
 # ------------ Utils ------------
 
-def timeout(now: datetime, last_check: datetime | None) -> float | None:
+def timeout(now: datetime, last_check: datetime | None) -> int | None:
     if last_check is None:
         return None
 
     difference = now - last_check
     if difference < timedelta(seconds=5):
-        return difference.total_seconds()
+        wait_time = int(5 - difference.total_seconds())
+        return wait_time or 1
     
     return None
 
@@ -40,14 +41,24 @@ async def check_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
     last_check = context.user_data.get("last_check")
 
     async with bot_data["locks"][telegram_id]:
+        keyboard = context.bot_data["payment_keyboard"].get(telegram_id)
+
+        if keyboard is None:
+            invoice = bot_data["pending_invoices"][telegram_id]
+            keyboard = selected_payment_keyboard(payment_url=invoice.payment_url)
+            
+            bot_data["payment_keyboard"][telegram_id] = keyboard
+            bot_data["payment_messages"][telegram_id] = query.message.message_id
+
         context.user_data["last_check"] = datetime.now()
 
         diff = timeout(context.user_data["last_check"], last_check)
 
         if diff is not None:
+
             await query.edit_message_text(
                 f"Подождите {diff} секунд",
-                reply_markup=context.bot_data["payment_keyboard"].get(telegram_id)
+                reply_markup=keyboard
             )
             return
         

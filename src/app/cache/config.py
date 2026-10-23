@@ -20,7 +20,7 @@ filter_configurations = {
         "input_data_key": "pending_invoices",
         "output_data_key": "invoices_to_recover",
         "params_to_record": ["id"],
-        "key_type": "str"
+        "key_type": "int"
     },
     "subscriptions_filter": {
         "input_data_key": "subscriptions",
