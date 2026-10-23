@@ -10,7 +10,10 @@ from ..keyboards.plan_keyboard import (
     plans_edit_keyboard,
     payment_methods_keyboard
 )
-from ..keyboards.payment_keyboard import selected_payment_keyboard, cancel_old_invoice_keyboard
+from ..keyboards.payment_keyboard import (
+    selected_payment_keyboard,
+    cancel_old_invoice_keyboard
+)
 
 from ..client.api_client import api_client
 from ..client.models.exceptions import APIException, NotFoundError, BadRequestError
@@ -169,6 +172,11 @@ async def selected_payment_method(update: Update, context: ContextTypes.DEFAULT_
         )
         if selected_plan is None:
             return
+
+        await query.edit_message_text(
+            "<b>Генерация ссылки..</b>",
+            parse_mode=ParseMode.HTML
+        )
 
         try:
             invoice = await api_client.create_invoice(
