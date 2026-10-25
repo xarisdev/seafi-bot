@@ -81,10 +81,19 @@ class WSSClient():
 
         logger.info(
             "Recieve websocket: %s",
-            message.model_dump()
+            message.model_dump(mode="json")
         )
 
-        self.application.bot_data["recieved_websockets"][message.id] = message.model_dump(mode="json")
+        self.application.bot_data["recieved_websockets"][message.id] = message
+        
+        _websockets: dict[str, WebSocketMessage] = self.application.bot_data["recieved_websockets"]
+        
+        if len(_websockets) > 50:
+            oldest_id = min(
+                _websockets,
+                key=lambda key: _websockets[key].created_at
+            )
+            del _websockets[oldest_id]
 
         await check_payment_at_wss(
             application=self.application,

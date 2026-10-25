@@ -45,10 +45,16 @@ class DataFilter:
             return output
 
         if self.params_to_record is None:
-            if hasattr(to_filter_data, "model_dump"):
-                to_filter_data = to_filter_data.model_dump()
+            output[self.output_data_key] = {}
+            
+            for key, value in to_filter_data.items():
+                if hasattr(value, "model_dump"):
+                    sdata = value.model_dump(mode="json")
+                else:
+                    sdata = value
 
-            output[self.output_data_key] = to_filter_data
+                output[self.output_data_key][str(key)] = sdata
+
             return output
 
         if not self.params_to_record:
@@ -61,7 +67,7 @@ class DataFilter:
 
         for key, value in to_filter_data.items():
             if hasattr(value, "model_dump"):
-                value = value.model_dump()
+                value = value.model_dump(mode="json")
 
             _key_dict = {}
             for _key, _value in value.items():

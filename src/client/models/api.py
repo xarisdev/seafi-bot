@@ -82,3 +82,5 @@ class WebSocketMessage(BaseModel):
     buyer_email: str
     contract_id: str
     invoice_status: str
+
+    created_at: datetime | None = None
